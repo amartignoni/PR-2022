@@ -133,9 +133,6 @@ test_y = torch.tensor(test_y)
 # Instantiate model
 model = PR_CNN()
 
-# Declare device
-device = torch.device('cpu')
-
 # Define loss function
 criterion = nn.CrossEntropyLoss()
 
@@ -153,6 +150,7 @@ plt.figure(figsize=(10, 10))
 for epochs in num_epochs:
     for epoch in range(epochs):
         model.train()
+
         # Forward pass
         optimizer.zero_grad()
         outputs = model(train_x)
