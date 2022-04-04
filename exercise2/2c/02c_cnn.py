@@ -113,7 +113,7 @@ with open('./../../../../Data/test.csv', 'r') as f:
     test_samples = matrix[:, 1:]
     test_labels = matrix[:, 0]
 
-# Converting data in order to run with torch DataLoader
+# Converting data into proper format
 train_x = train_samples.reshape(26999, 1, 28, 28)
 train_x = train_x.astype(np.float32)
 train_x = torch.from_numpy(train_x)
