@@ -145,7 +145,6 @@ train_accuracies = []
 test_losses = []
 test_accuracies = []
 
-plt.figure(figsize=(10, 10))
 # Run number of epochs
 for epochs in num_epochs:
     for epoch in range(epochs):
@@ -186,18 +185,20 @@ for epochs in num_epochs:
 
         print('Epoch [{}/{}], Loss: {:.4f}, Accuracy: {}'.format(epoch + 1, epochs, train_loss.item(), accuracy))
 
-    plt.subplot(221)
+    plt.figure(figsize=(10, 10))
     plt.plot(train_accuracies, label='Training accuracies')
     plt.plot(test_accuracies, label='Testing accuracies')
     plt.xlabel('Epochs')
     plt.ylabel('Accuracy')
     plt.legend()
-    plt.subplot(222)
+    plt.savefig('accuracy_02c.png')
+    plt.figure(figsize=(10, 10))
     plt.plot(train_losses, label='Training losses')
     plt.plot(test_losses, label='Testing losses')
     plt.xlabel('Epochs')
     plt.ylabel('Loss')
     plt.legend()
+    plt.savefig('loss_02c.png')
 
     train_accuracies.clear()
     test_accuracies.clear()
@@ -215,7 +216,3 @@ predictions = np.argmax(prob, axis=1)
 accuracy = accuracy_score(test_y, predictions)
 print("Final Test Accuracy: {}, Final Test Loss: {}".format(accuracy, final_test_loss))
 test_accuracies.append(accuracy)
-
-plt.savefig('validation_plots_02c.pdf')
-plt.show()
-
