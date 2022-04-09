@@ -8,7 +8,6 @@ Fix the three lines below marked with PR_FILL_HERE
 """
 import numpy as np
 import torch
-import csv
 import torch.nn as nn
 from sklearn.metrics import accuracy_score
 import matplotlib.pyplot as plt
@@ -157,12 +156,12 @@ for epochs in num_epochs:
         model.train()
 
         # Forward pass
-        optimizer.zero_grad()
+        #optimizer.zero_grad()
         outputs = model(train_x)
         train_loss = criterion(outputs, train_y)
 
         # Backward and optimize
-        # optimizer.zero_grad()
+        optimizer.zero_grad()
         train_loss.backward()
         optimizer.step()
 
@@ -197,14 +196,14 @@ for epochs in num_epochs:
     plt.xlabel('Epochs')
     plt.ylabel('Accuracy')
     plt.legend()
-    plt.savefig('accuracy_02c.png')
+    plt.savefig('accuracy_02d_cnn.png')
     plt.figure(figsize=(10, 10))
     plt.plot(train_losses, label='Training losses')
     plt.plot(test_losses, label='Testing losses')
     plt.xlabel('Epochs')
     plt.ylabel('Loss')
     plt.legend()
-    plt.savefig('loss_02c.png')
+    plt.savefig('loss_02d_cnn.png')
 
     train_accuracies.clear()
     test_accuracies.clear()
