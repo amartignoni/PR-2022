@@ -67,6 +67,8 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 ## initiate model
 model = MLP(neurons_middle_layer).to(device)
+model2 = MLP(neurons_middle_layer).to(device)
+model.load_state_dict(torch.load("trained_model.pth"))
 
 ## define loss function
 loss_func = nn.CrossEntropyLoss()
@@ -132,6 +134,25 @@ def test_loop(dataloader, model, loss_fn):
     return correct, te_loss
 
 
+def test_loop2(dataloader, model, loss_fn):
+    size = len(dataloader.dataset)
+    num_batches = len(dataloader)
+    te_loss, correct = 0, 0
+
+    with torch.no_grad():  # don't backpropagate when testing
+        for x, y in dataloader:
+            x = x.to(device)
+            y = y.to(device)
+            pred = model(x)
+            te_loss += loss_fn(pred, y).item()
+            correct += (pred.argmax(1) == y).type(torch.float).sum().item()
+
+    te_loss /= num_batches
+    correct /= size
+    print(f"Test : \n Accuracy: {(100*correct):>0.1f}%, Averag loss: {te_loss:>8f} \n")
+    return correct, te_loss
+
+
 for e in range(epochs):
     print(f"Epoch {e+1}\n-------------------------------")
     # execute network, store accuracies and errors
@@ -143,6 +164,8 @@ for e in range(epochs):
     train_loss.append(train_err)
     test_acc.append(test_accuracy)
     test_loss.append(test_err)
+
+test_accuracy, test_err = test_loop2(load_test(), model, loss_func)
 print("Done!")
 
 plot_results = True
