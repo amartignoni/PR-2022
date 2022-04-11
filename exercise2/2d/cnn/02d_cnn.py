@@ -8,11 +8,11 @@ Fix the three lines below marked with PR_FILL_HERE
 """
 import numpy as np
 import torch
-import csv
 import torch.nn as nn
 from sklearn.metrics import accuracy_score
 import matplotlib.pyplot as plt
-
+from matplotlib import image
+import os
 
 class Flatten(nn.Module):
     """
@@ -93,40 +93,45 @@ class PR_CNN(nn.Module):
         return x
 
 
+class DataLoader:
+
+    def load_data(self, directory):
+        image_labels = []
+        image_files = []
+
+        for path, currentDirectory, filenames in os.walk(directory):
+            for filename in filenames:
+                image_labels.append(filename.split("-")[0])
+                image_content = image.imread(path + "/" + filename)
+                image_files.append(image_content)
+
+        return image_labels, image_files
+
+
 # Instantiate variables
 batch_size = 64
-learning_rate = 0.001
+learning_rate = 0.01
 num_epochs = [200]
 
 # Load data
-with open('./../../../../Data/train.csv', 'r') as f:
-    reader = csv.reader(f)
-    data = list(reader)
-    matrix = np.array(data, dtype=int)
-    train_samples = matrix[:, 1:]
-    train_labels = matrix[:, 0]
-
-with open('./../../../../Data/test.csv', 'r') as f:
-    reader = csv.reader(f)
-    data = list(reader)
-    matrix = np.array(data, dtype=int)
-    test_samples = matrix[:, 1:]
-    test_labels = matrix[:, 0]
+dataLoader = DataLoader()
+train_labels, train_images = dataLoader.load_data("./../../../../../Data/mnist-png-format-permutated/train")
+test_labels, test_images = dataLoader.load_data("./../../../../../Data/mnist-png-format-permutated/test")
 
 # Converting data into proper format
-train_x = train_samples.reshape(26999, 1, 28, 28)
+train_x = np.array(train_images).reshape(60000, 1, 28, 28)
 train_x = train_x.astype(np.float32)
 train_x = torch.from_numpy(train_x)
 train_x = torch.tensor(train_x)
-train_y = train_labels.astype(int)
+train_y = np.array(train_labels).astype(int)
 train_y = torch.from_numpy(train_y)
 train_y = torch.tensor(train_y)
 
-test_x = test_samples.reshape(15001, 1, 28, 28)
+test_x = np.array(test_images).reshape(10000, 1, 28, 28)
 test_x = test_x.astype(np.float32)
 test_x = torch.from_numpy(test_x)
 test_x = torch.tensor(test_x)
-test_y = test_labels.astype(int)
+test_y = np.array(test_labels).astype(int)
 test_y = torch.from_numpy(test_y)
 test_y = torch.tensor(test_y)
 
@@ -151,12 +156,12 @@ for epochs in num_epochs:
         model.train()
 
         # Forward pass
-        optimizer.zero_grad()
+        #optimizer.zero_grad()
         outputs = model(train_x)
         train_loss = criterion(outputs, train_y)
 
         # Backward and optimize
-        # optimizer.zero_grad()
+        optimizer.zero_grad()
         train_loss.backward()
         optimizer.step()
 
@@ -191,14 +196,14 @@ for epochs in num_epochs:
     plt.xlabel('Epochs')
     plt.ylabel('Accuracy')
     plt.legend()
-    plt.savefig('./temp/accuracy_02c.png')
+    plt.savefig('./temp/accuracy_02d_cnn.png')
     plt.figure(figsize=(10, 10))
     plt.plot(train_losses, label='Training losses')
     plt.plot(test_losses, label='Testing losses')
     plt.xlabel('Epochs')
     plt.ylabel('Loss')
     plt.legend()
-    plt.savefig('./temp/loss_02c.png')
+    plt.savefig('./temp/loss_02d_cnn.png')
 
     train_accuracies.clear()
     test_accuracies.clear()
