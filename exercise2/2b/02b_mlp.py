@@ -52,13 +52,16 @@ class MLP(nn.Module):  ## adapted from the pytorch documentation
 
 
 ## define parameters
-neurons_middle_layer = 10
-learning_rate = 0.001  # from 0.001 to 0.1
-batch_size = 64  # change if performance requires it
+neurons_middle_layer = 100
+learning_rate = 0.01  # from 0.001 to 0.1
+batch_size = 512  # change if performance requires it
 epochs = 5  # to be according to graphs
 
+## check gpu availability
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+
 ## initiate model
-model = MLP(neurons_middle_layer)
+model = MLP(neurons_middle_layer).to(device)
 
 ## define loss function
 loss_func = nn.CrossEntropyLoss()
@@ -73,13 +76,15 @@ test_loss = []
 test_acc = []
 
 
-def train_loop(dataloader, model, loss_fn, optimizer):
+def train_loop(dataloader, model, loss_fn, optimizer, batch_size):
     size = len(dataloader.dataset)
     num_batches = len(dataloader)
     tr_loss, correct = 0, 0
-    for batch, (X, y) in enumerate(dataloader):
+    for batch, (x, y) in enumerate(dataloader):
         # Compute prediction and loss
-        pred = model(X)
+        x = x.to(device)
+        y = y.to(device)
+        pred = model(x)
         correct += (pred.argmax(1) == y).type(torch.float).sum().item()
         loss = loss_fn(pred, y)
         tr_loss += loss.item()
@@ -89,14 +94,14 @@ def train_loop(dataloader, model, loss_fn, optimizer):
         loss.backward()
         optimizer.step()
 
-        if batch % 100 == 0:
+        if batch % batch_size == 0:
             loss, current = loss.item(), batch * len(X)
             print(f"loss: {loss:>7f}  [{current:>5d}/{size:>5d}]")
 
     tr_loss /= num_batches
     correct /= size
     print(
-        f"Test Error: \n Accuracy: {(100 * correct):>0.1f}%, Avg loss: {tr_loss:>8f} \n"
+        f"Train Error: \n Accuracy: {(100 * correct):>0.1f}%, Avg loss: {tr_loss:>8f} \n"
     )
     return correct, tr_loss
 
@@ -107,8 +112,10 @@ def test_loop(dataloader, model, loss_fn):
     te_loss, correct = 0, 0
 
     with torch.no_grad(): # don't backpropagate when testing
-        for X, y in dataloader:
-            pred = model(X)
+        for x, y in dataloader:
+            x = x.to(device)
+            y = y.to(device)
+            pred = model(x)
             te_loss += loss_fn(pred, y).item()
             correct += (pred.argmax(1) == y).type(torch.float).sum().item()
 
@@ -123,7 +130,7 @@ def test_loop(dataloader, model, loss_fn):
 for e in range(epochs):
     print(load_train(64))
     print(f"Epoch {e+1}\n-------------------------------")
-    train_accuracy, train_err = train_loop(load_train(batch_size), model, loss_func, optimizer)
+    train_accuracy, train_err = train_loop(load_train(batch_size), model, loss_func, optimizer, batch_size)
     test_accuracy, test_err = test_loop(load_test(), model, loss_func)
     train_acc.append(train_accuracy)
     train_loss.append(train_err)
