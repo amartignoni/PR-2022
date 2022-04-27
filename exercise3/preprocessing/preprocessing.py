@@ -2,6 +2,7 @@ import cv2 as cv
 import numpy as np
 from pathlib import Path
 from xml.dom import minidom
+import math
 
 
 # Conversion from SVG path to list of contour points
@@ -29,13 +30,11 @@ doc.unlink()
 
 # imread needs a string
 text_img = cv.imread(str(img_path), 0) # load binary image
-blur_img = cv.GaussianBlur(text_img, (5,5) ,0) # recommended blur
-thresh, _ = cv.threshold(blur_img, 42, 255, cv.THRESH_BINARY + cv.THRESH_OTSU)
-_, final_img = cv.threshold(text_img, thresh, 255, cv.THRESH_BINARY)
+_, final_img = cv.threshold(text_img, 180, 255, cv.THRESH_BINARY)
 for polygon in polygons.values():
     # List of points needs to be itself in a list
     cv.polylines(final_img, [polygon], isClosed=True, color=(0,0,255), thickness=4)
-print(final_img)
+#print(final_img.shape, final_img, np.average(text_img[1100:1160, 765:800]))
 cv.imshow("Display", final_img)
 # Press a key to close the window
 cv.waitKey(0)
