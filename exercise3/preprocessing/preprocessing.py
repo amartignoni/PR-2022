@@ -27,10 +27,14 @@ polygons = {path.getAttribute('id') : path_to_contour(path.getAttribute('d')) fo
 doc.unlink()
 
 # imread needs a string
-text_img = cv.imread(str(img_path))
+text_img = cv.imread(str(img_path), 0) # load binary image
+blur_img = cv.GaussianBlur(text_img, (5,5) ,0)
+thresh, bin_img = cv.threshold(blur_img, 42, 255, cv.THRESH_BINARY + cv.THRESH_OTSU)
 for polygon in polygons.values():
     # List of points needs to be itself in a list
-    cv.polylines(text_img, [polygon], isClosed=True, color=(0,0,255), thickness=2)
-cv.imshow("Display", text_img)
+    cv.polylines(bin_img, [polygon], isClosed=True, color=(0,0,255), thickness=4)
+print(bin_img)
+cv.imshow("Display", bin_img)
 # Press a key to close the window
 cv.waitKey(0)
+cv.destroyAllWindows()
