@@ -15,6 +15,7 @@ def path_to_contour(svg_path):
 # Creating paths
 root_path = Path.cwd().parents[0] / 'data'
 # TODO: iterate over all files in a directory and not use id anymore, this is just to test
+# IDEA : use the parser to grab IDs from the SVG ?
 id = 278
 svg_path = root_path / 'ground-truth' / 'locations' / f"{id}.svg"
 img_path = root_path / 'images' / f"{id}.jpg"
@@ -28,13 +29,14 @@ doc.unlink()
 
 # imread needs a string
 text_img = cv.imread(str(img_path), 0) # load binary image
-blur_img = cv.GaussianBlur(text_img, (5,5) ,0)
-thresh, bin_img = cv.threshold(blur_img, 42, 255, cv.THRESH_BINARY + cv.THRESH_OTSU)
+blur_img = cv.GaussianBlur(text_img, (5,5) ,0) # recommended blur
+thresh, _ = cv.threshold(blur_img, 42, 255, cv.THRESH_BINARY + cv.THRESH_OTSU)
+_, final_img = cv.threshold(text_img, thresh, 255, cv.THRESH_BINARY)
 for polygon in polygons.values():
     # List of points needs to be itself in a list
-    cv.polylines(bin_img, [polygon], isClosed=True, color=(0,0,255), thickness=4)
-print(bin_img)
-cv.imshow("Display", bin_img)
+    cv.polylines(final_img, [polygon], isClosed=True, color=(0,0,255), thickness=4)
+print(final_img)
+cv.imshow("Display", final_img)
 # Press a key to close the window
 cv.waitKey(0)
 cv.destroyAllWindows()
