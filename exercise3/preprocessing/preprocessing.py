@@ -31,11 +31,26 @@ doc.unlink()
 # imread needs a string
 text_img = cv.imread(str(img_path), 0) # load binary image
 _, final_img = cv.threshold(text_img, 180, 255, cv.THRESH_BINARY)
+# TODO: convert img to boolean array
 for polygon in polygons.values():
     # List of points needs to be itself in a list
+    # TODO: change the method to cv.fillConvexPoly()
+    # https://stackoverflow.com/questions/30901019/extracting-polygon-given-coordinates-from-an-image-using-opencv
     cv.polylines(final_img, [polygon], isClosed=True, color=(0,0,255), thickness=4)
+    # TODO: extract the image of the word -> masked array -> conversion to pillow
+    # https://stackoverflow.com/questions/22588074/polygon-crop-clip-using-python-pil
+    # TODO: resize the image, think about the size 50x200? (cv.resize()) -> convert back to array
+    # TODO: save this array
+
+# TODO: Load the transcription.txt and assign transcription to the array
+
 #print(final_img.shape, final_img, np.average(text_img[1100:1160, 765:800]))
 cv.imshow("Display", final_img)
 # Press a key to close the window
 cv.waitKey(0)
 cv.destroyAllWindows()
+
+
+# Christophe: Preprocessing
+# Dominik: Features
+# Augustin: DTW/algorithms
