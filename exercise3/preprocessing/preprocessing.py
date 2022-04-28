@@ -67,7 +67,7 @@ for svg_path in svg_paths.iterdir():
         mask = np.zeros((orig_height, orig_width))
         cv.fillConvexPoly(mask, polygon, 1)
         mask = mask.astype(bool)
-        out = np.ma.zeros_like(binarized_img)
+        out = np.zeros_like(binarized_img)
         out[mask] = binarized_img[mask]
 
         # Translate the present pixels in the center of the original image
