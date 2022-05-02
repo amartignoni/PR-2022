@@ -1,4 +1,23 @@
 import numpy as np
+import pandas as pd
+
+
+def get_features(preprocessed_data):
+    features = []
+    for image_object in preprocessed_data:
+        image_id = image_object["id"]
+        image = image_object["image"]
+        image_features = []
+        for column in image.shape[1]:
+            image_features.append(calculate_feature_vector(image[:, column]))
+        feature_object = pd.DataFrame(
+            {
+                "id": image_id,
+                "features": image_features
+
+            })
+        features.append(feature_object)
+    return features
 
 
 def calculate_feature_vector(window):
