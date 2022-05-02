@@ -1,32 +1,37 @@
 import numpy as np
 import pandas as pd
 
+ID = "id"
+FEATURES = "features"
+IMAGE = "image"
+
 
 def get_features(preprocessed_data):
     features = []
     for image_object in preprocessed_data:
-        image_id = image_object["id"]
-        image = image_object["image"]
+        image_id = image_object[ID]
+        image = image_object[IMAGE]
         image_features = []
-        for column in image.shape[1]:
-            image_features.append(calculate_feature_vector(image[:, column]))
+        for column in range(image.shape[1] - 1):
+            image_features.append(calculate_feature_vector(image[:, column], image[:, column + 1]))
         feature_object = pd.DataFrame(
             {
-                "id": image_id,
-                "features": image_features
+                ID: image_id,
+                FEATURES: image_features
 
             })
         features.append(feature_object)
     return features
 
 
-def calculate_feature_vector(window):
+def calculate_feature_vector(window, next_window):
     return [upper_contour(window),
             lower_contour(window),
             number_of_black_white_transitions(window),
             fraction_of_black_pixels(window),
             fraction_of_black_pixels_between_uc_and_lc(window),
-            gradient_lc_uc(window)]
+            gradient_lc(window, next_window),
+            gradient_uc(window, next_window)]
 
 
 def upper_contour(window):
@@ -50,6 +55,10 @@ def fraction_of_black_pixels_between_uc_and_lc(window):
     return np.count_nonzero(window[upper_contour(window):lower_contour(window)] == 0) / len(window)
 
 
-# TODO implement
-def gradient_lc_uc(window):
-    return window
+def gradient_lc(window, next_window):
+    return lower_contour(window) - lower_contour(next_window)
+
+
+def gradient_uc(window, next_window):
+    return upper_contour(window) - upper_contour(next_window)
+
