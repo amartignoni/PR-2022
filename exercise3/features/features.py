@@ -17,11 +17,18 @@ def get_features(preprocessed_data):
         feature_object = pd.DataFrame(
             {
                 ID: image_id,
-                FEATURES: image_features
+                FEATURES: normalize(np.array(image_features))
 
             })
         features.append(feature_object)
     return features
+
+
+def normalize(feature_vectors):
+    transposed = feature_vectors.T
+    for column in transposed:
+        transposed[column] = (transposed[column] - transposed[column].mean()) / transposed[column].std()
+    return transposed.T
 
 
 def calculate_feature_vector(window, next_window):
