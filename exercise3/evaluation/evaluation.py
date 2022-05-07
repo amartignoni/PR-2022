@@ -1,6 +1,7 @@
 from os import listdir
 
 import preprocessing.preprocessing as prep
+import matplotlib.pyplot as plt
 
 ROOT_PATH = prep.root_path
 TRANSCRIPTION_PATH = prep.transcription_path
@@ -54,6 +55,24 @@ def classification_values(classifications, transcriptions, keywords):
     return true_positives, false_positives, false_negatives
 
 
+def plot_precision_recall_curve(precision_scores, recall_scores):
+    figure, axis = plt.subplots(figsize=(6, 6))
+    axis.plot(recall_scores, precision_scores, label='DTW')
+    axis.set_xlabel('Recall')
+    axis.set_ylabel('Precision')
+    axis.legend(loc='center left')
+
+
+def calculate_average_precision(precision_scores, recall_scores):
+    if len(precision_scores) != len(recall_scores):
+        raise Exception("precision_scores and recall_scores must be of same length!")
+    average_precision = 0
+    idx = 1
+    while idx < len(precision_scores):
+        average_precision += (recall_scores[idx] - recall_scores[idx-1]) * precision_scores[idx]
+    return average_precision
+
+
 def calculate_precision_and_recall(thresholds):
     keywords = read_keywords(KEYWORD_PATH)
 
@@ -79,4 +98,6 @@ def calculate_precision_and_recall(thresholds):
         precision_scores.append(precision)
         recall_scores.append(recall)
 
-    # TODO: precision-recall-curve per image
+    plot_precision_recall_curve(precision_scores, recall_scores)
+    average_precision = calculate_average_precision(precision_scores, recall_scores)
+    print("Average precision: " + str(average_precision))
