@@ -9,15 +9,17 @@ CLASSIFICATION_PATH = ROOT_PATH / "distance"
 IMG_PATH = prep.img_root
 
 
-def read_classifications(path):
+def read_classifications(path, threshold):
     classifications = {}
     for line in open(path, "r"):
         keyword, assigned_words = line.split(",", 1)
         assigned_words = assigned_words.split(",")
         idx = 0
-        while idx < len(assigned_words):
+        number_of_words = 0
+        while number_of_words < threshold:
             test_word_id = assigned_words[idx]
             dissimilarity = assigned_words[idx + 1]
+            number_of_words += 1
             idx += 2
             classifications[test_word_id] = keyword
     return classifications
@@ -30,11 +32,12 @@ def read_keywords(path):
     return keywords
 
 
-def read_transcriptions(path):
+def read_transcriptions(path, classifications):
     transcriptions = {}
     for line in open(path, "r"):
         word_id, transcription = line.split()
-        transcriptions[word_id] = transcription
+        if word_id in classifications.keys():
+            transcriptions[word_id] = transcription
     return transcriptions
 
 
@@ -53,25 +56,27 @@ def classification_values(classifications, transcriptions, keywords):
 
 def calculate_precision_and_recall(thresholds):
     keywords = read_keywords(KEYWORD_PATH)
-    transcriptions = read_transcriptions(TRANSCRIPTION_PATH)
-    classifications = read_classifications(CLASSIFICATION_PATH)
-    images = [img for img in listdir(IMG_PATH)]
 
-    for image in images:
-        precision_scores = []
-        recall_scores = []
-        for k in thresholds:
-            img_id = image.split(".")[0]
+    precision_scores = []
+    recall_scores = []
+    for threshold in thresholds:
+        classifications = read_classifications(CLASSIFICATION_PATH, threshold)
+        transcriptions = read_transcriptions(TRANSCRIPTION_PATH, classifications)
 
-            classifications_per_img = {word_id: classification for (word_id, classification) in classifications.items()
-                                       if word_id.startswith(img_id)}
-            transcriptions_per_img = {word_id: transcription for (word_id, transcription) in transcriptions.items()
-                                      if word_id.startswith(img_id)}
+        true_positives, false_positives, false_negatives = \
+            classification_values(classifications, transcriptions, keywords)
 
-            true_positives, false_positives, false_negatives = \
-                classification_values(classifications_per_img, transcriptions_per_img, keywords)
+        try:
+            precision = true_positives / (true_positives + false_positives)
+        except:
+            precision = 1
 
-            precision_scores.append(true_positives / (true_positives + false_positives))
-            recall_scores.append(true_positives / (true_positives + false_negatives))
+        try:
+            recall = true_positives / (true_positives + false_negatives)
+        except:
+            recall = 1
 
-        # TODO: precision-recall-curve per image
+        precision_scores.append(precision)
+        recall_scores.append(recall)
+
+    # TODO: precision-recall-curve per image
