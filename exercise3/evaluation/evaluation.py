@@ -1,5 +1,3 @@
-from os import listdir
-
 import preprocessing.preprocessing as prep
 import matplotlib.pyplot as plt
 
