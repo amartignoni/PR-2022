@@ -8,6 +8,7 @@ TRANSCRIPTION_PATH = prep.transcription_path
 KEYWORD_PATH = ROOT_PATH / "task" / "keywords.txt"
 CLASSIFICATION_PATH = ROOT_PATH / "distance"
 IMG_PATH = prep.img_root
+THRESHOLDS = range(5, 15)
 
 
 def read_classifications(path, threshold):
@@ -73,12 +74,12 @@ def calculate_average_precision(precision_scores, recall_scores):
     return average_precision
 
 
-def calculate_precision_and_recall(thresholds):
+def calculate_precision_and_recall():
     keywords = read_keywords(KEYWORD_PATH)
 
     precision_scores = []
     recall_scores = []
-    for threshold in thresholds:
+    for threshold in THRESHOLDS:
         classifications = read_classifications(CLASSIFICATION_PATH, threshold)
         transcriptions = read_transcriptions(TRANSCRIPTION_PATH, classifications)
 
