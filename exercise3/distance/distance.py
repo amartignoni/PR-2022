@@ -3,11 +3,13 @@ import numpy as np
 import pandas as pd
 from pathlib import Path
 import torch as th
-import tslearn as tl
+#import tslearn as tl
 import csv
 import sys
 sys.path.append('../features')
 from features import get_features
+from scipy.spatial.distance import euclidean
+from fastdtw import fastdtw
 
 train_path = Path.cwd().parents[0] / "preprocessing" / "output" / "train"
 valid_path = Path.cwd().parents[0] / "preprocessing" / "output" / "valid"
@@ -26,12 +28,12 @@ def load_files_and_compute_features(load_path, save_path):
 
         with open(image, "r") as f:  # read each csv into dictionary
 
-            dico = [
+            list_dico = [
                 {k: v for k, v in row.items()}
                 for row in csv.DictReader(f, skipinitialspace=True)
             ]
 
-        compute_features = get_features(dico)  # modify images into feature vectors
+        compute_features = get_features(list_dico)  # modify images into feature vectors
 
         dict_to_array = np.array(  # transform each dict to a numpy array
             [[val for val in elem.values()] for elem in compute_features]
@@ -61,7 +63,8 @@ def load_precomputed_features(load_path):
 
 
 def generalizedDTW(test, training):
-    return tl.metrics.dtw(test, training, "sakoe_chiba")
+    #return tl.metrics.dtw(test, training, "sakoe_chiba")
+    distance, _ = fastdtw(x, y, dist=euclidean)
 
 
 ## sort images and return best guess (or best guesses)

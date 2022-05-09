@@ -89,6 +89,9 @@ for svg_path in svg_paths.iterdir():
         # Crop the image using slicing
         crop = out_translate[top:bot, left:right]
 
+        cv.imwrite(output_path / id + ".csv", crop)
+            
+
         # Add to preprocessed data: id, transcription and preprocessed image
         # Need to pass an index to concatenate below
         new_row = pd.DataFrame(
@@ -100,6 +103,11 @@ for svg_path in svg_paths.iterdir():
             },
             index=[0],
         )
+
+        if id == "273-01-01":
+            print(new_row)
+
+        
 
         preprocessed_data = pd.concat([preprocessed_data, new_row], ignore_index=True)
         print(".", end="", flush=True)

@@ -10,8 +10,10 @@ TRANSCRIPTION = "transcription"
 def get_features(preprocessed_data):
     features = []
     for image_object in preprocessed_data:
+        print(image_object)
         image_id = image_object[ID]
-        image = image_object[IMAGE]
+        image = np.array(image_object[IMAGE])
+        image.reshape((200,800))
         image_transcription = image_object[TRANSCRIPTION]
         image_features = []
         for column in range(image.shape[1] - 1):
