@@ -106,6 +106,11 @@ for svg_path in svg_paths.iterdir():
 
     # Current solution to avoid not enough RAM -> one csv for each file
     # TODO: store preprocessed data in another structure? What is the best for the tasks that come after?
+    if svg_path.stem in ['300','301','302','303','304']:
+        preprocessed_data.to_csv(output_path / "valid" / f"{svg_path.stem}.csv", index=False)
+    else: 
+        preprocessed_data.to_csv(output_path / "train" / f"{svg_path.stem}.csv", index=False)
+
     preprocessed_data.to_csv(output_path / f"{svg_path.stem}.csv", index=False)
     print(f"{svg_path.stem} done!")
 

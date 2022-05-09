@@ -6,15 +6,15 @@ import torch as th
 import tslearn as tl
 import csv
 
-train_path = Path.cwd().parents[0] / "preprocessing" / "output"
-# load_path = Path.cwd().parents[0] / "preprocessing" / "output"
+train_path = Path.cwd().parents[0] / "preprocessing" / "output" / "train"
+valid_path = Path.cwd().parents[0] / "preprocessing" / "output" / "valid"
 
 ## plan
 
 ## compute features for all images (training and testing data)
 
 
-def load_train(train_p):
+def load_files(load_path):
 
     t = tuple()  # store arrays to stack together into one
 
@@ -22,18 +22,19 @@ def load_train(train_p):
 
         with open(image, "r") as f:  # read each csv into dictionary
 
-            dict = [
+            dico = [
                 {k: v for k, v in row.items()}
                 for row in csv.DictReader(f, skipinitialspace=True)
             ]
 
-        compute_features = get_features(dict)  # modify images into feature vectors
+        compute_features = get_features(dico)  # modify images into feature vectors
 
         dict_to_array = np.array(  # transform each dict to a numpy array
             [
-                val[header]
-                for header in ("ID", "TRANSCRIPTION", "FEATURES")
-                for key, val in compute_features.items()
+                [val[header]
+                for header in ("ID", "FEATURES", "TRANSCRIPTION")]
+                for key, val in elem.items()
+                for elem in compute_features
             ]
         )
 
@@ -42,6 +43,9 @@ def load_train(train_p):
     res = np.stack(t)  # final array
 
     return res
+
+
+
 
 
 ## function to compute dtw between test image and array of training images
@@ -91,8 +95,10 @@ if __name__=='main':
 
     train = load_train(train_path)
 
-    # test = load_test(test_path)
+    test = load_files(test_path)
 
     WM = WordMatcher(train[:,2], train[:,1], train[:,0], train.shape[0])
+
+
 
 

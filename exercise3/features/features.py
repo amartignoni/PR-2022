@@ -4,6 +4,7 @@ import pandas as pd
 ID = "id"
 FEATURES = "features"
 IMAGE = "image"
+TRANSCRIPTION = "transcription"
 
 
 def get_features(preprocessed_data):
@@ -11,14 +12,15 @@ def get_features(preprocessed_data):
     for image_object in preprocessed_data:
         image_id = image_object[ID]
         image = image_object[IMAGE]
+        image_transcription = image_object[TRANSCRIPTION]
         image_features = []
         for column in range(image.shape[1] - 1):
             image_features.append(calculate_feature_vector(image[:, column], image[:, column + 1]))
         feature_object = pd.DataFrame(
             {
                 ID: image_id,
-                FEATURES: normalize(np.array(image_features))
-
+                FEATURES: normalize(np.array(image_features)),
+                TRANSCRIPTION: image_transcription
             })
         features.append(feature_object)
     return features
