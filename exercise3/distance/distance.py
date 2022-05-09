@@ -148,9 +148,11 @@ for i in range(valid.shape[0]):
 
     temp_dict_sorted = sorted(temp_dict.items(), key = lambda x : x[1])
 
-    #tuple_list = 
+    tuple_list = temp_dict_sorted.items()
 
-    out.append({valid[i,1]: temp_dict_sorted})
+    flattened = [y for x in tuple_list for y in x]
+
+    out.append({valid[i,0]: flattened})
 
 df = pd.DataFrame(out)
 
