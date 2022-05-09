@@ -14,32 +14,32 @@ from fastdtw import fastdtw
 train_path = Path.cwd().parents[0] / "preprocessing" / "output" / "train"
 valid_path = Path.cwd().parents[0] / "preprocessing" / "output" / "valid"
 
-train_savepath = Path.cwd().parents[0] / "distance" / "output" / "train_features.csv"
-valid_savepath = Path.cwd().parents[0] / "distance" / "output" / "valid_features.csv"
+train_savepath = Path.cwd().parents[0] / "distance" / "output" / "train"
+valid_savepath = Path.cwd().parents[0] / "distance" / "output" / "valid"
 out_path = Path.cwd().parents[0] / "distance" / "output" / "distances.csv"
 
 ## compute features for all images (training and testing data)
 
 def load_files_and_compute_features(load_path, save_path):
 
-    t = tuple()  # store arrays to stack together into one
+    ids = []  # store arrays to stack together into one
+    images = []
 
     for image in load_path.iterdir():
 
-        with open(image, "r") as f:  # read each csv into dictionary
+        img_id = image.stem()
 
-            list_dico = [
-                {k: v for k, v in row.items()}
-                for row in csv.DictReader(f, skipinitialspace=True)
-            ]
+        ids.append(img_id)
 
-        compute_features = get_features(list_dico)  # modify images into feature vectors
+        image_array = np.genfromtxt(image)
 
-        dict_to_array = np.array(  # transform each dict to a numpy array
-            [[val for val in elem.values()] for elem in compute_features]
-        )
+        feature_array = get_features(image_array)  # modify images into feature vectors
 
-        t.append(dict_to_array)
+        images.append(feature_array)
+
+        np.savetxt(Path(save_path / f"{img_id}.csv"), feature_array, delimiter=",", fmt='%1i')
+
+
 
     res = np.cat(t)  # final array
 
@@ -47,7 +47,7 @@ def load_files_and_compute_features(load_path, save_path):
 
     df.to_csv(save_path)
 
-    return res
+    return ids, images
 
 
 def load_precomputed_features(load_path):
@@ -57,14 +57,12 @@ def load_precomputed_features(load_path):
     return res
 
 
-## function to compute dtw between test image and array of training images
-
-# test : n.features x width ; training : n.samples x n.features x width
-
+## function to compute dtw between two arrays of features
 
 def generalizedDTW(test, training):
     #return tl.metrics.dtw(test, training, "sakoe_chiba")
     distance, _ = fastdtw(x, y, dist=euclidean)
+    return distance
 
 
 ## sort images and return best guess (or best guesses)
