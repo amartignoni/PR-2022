@@ -9,16 +9,19 @@ import csv
 train_path = Path.cwd().parents[0] / "preprocessing" / "output" / "train"
 valid_path = Path.cwd().parents[0] / "preprocessing" / "output" / "valid"
 
+train_savepath = Path.cwd().parents[0] / "distances" / "output" / "train.csv"
+valid_savepath = Path.cwd().parents[0] / "distances" / "output" / "valid.csv"
+
 ## plan
 
 ## compute features for all images (training and testing data)
 
 
-def load_files(load_path):
+def load_files_and_compute_features(load_path, save_path):
 
     t = tuple()  # store arrays to stack together into one
 
-    for image in train_p.iterdir():
+    for image in load_path.iterdir():
 
         with open(image, "r") as f:  # read each csv into dictionary
 
@@ -30,27 +33,32 @@ def load_files(load_path):
         compute_features = get_features(dico)  # modify images into feature vectors
 
         dict_to_array = np.array(  # transform each dict to a numpy array
-            [
-                [val[header]
-                for header in ("ID", "FEATURES", "TRANSCRIPTION")]
-                for key, val in elem.items()
-                for elem in compute_features
-            ]
+            [[val for val in elem.values()] for elem in compute_features]
         )
 
         t.append(dict_to_array)
 
-    res = np.stack(t)  # final array
+    res = np.cat(t)  # final array
+
+    df = pd.DataFrame(res)
+
+    df.to_csv(save_path)
 
     return res
 
 
+def load_precomputed_features(load_path):
 
+    res = np.loadtxt(load_path)
+
+    return res
 
 
 ## function to compute dtw between test image and array of training images
 
 # test : n.features x width ; training : n.samples x n.features x width
+
+
 def generalizedDTW(test, training):
     return tl.metrics.dtw(test, training, "sakoe_chiba")
 
@@ -91,14 +99,36 @@ class WordMatcher:
         return th.cat((labels_sorted[:k], dist_sorted[:k], IDs_sorted[:k]), 0)
 
 
-if __name__=='main':
+if __name__ == "main":
 
-    train = load_train(train_path)
+    if sys.argv[1] == True:
 
-    test = load_files(test_path)
+        train = load_files_and_compute_features(train_path / "train.csv")
 
-    WM = WordMatcher(train[:,2], train[:,1], train[:,0], train.shape[0])
+        valid = load_files_and_compute_features(valid_path / "valid.csv")
+
+    else:
+
+        train = load_precomputed_features(train_savepath)
+
+        valid = valid_savepath(valid_savepath)
+
+    WM = WordMatcher(train[:, 2], train[:, 1], train[:, 0], train.shape[0])
+
+    # compute distance matrix
+
+    # dist_mat = np.zeros((train.shape[0], valid.shape[0]))
+
+    dist_mat = np.array(
+        [
+            [generalizedDTW(train[i, 0], valid[i, 0]) for i in range(train.shape[0])]
+            for j in range(valid.shape[0])
+        ]
+    )
+
+    # for i in train:
+    #     for j in valid:
+    #         dist_mat[i,j] = generalizedDTW(train[i, 0], valid[i, 0])
 
 
-
-
+    ## generate csv
