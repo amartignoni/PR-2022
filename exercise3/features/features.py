@@ -7,28 +7,13 @@ IMAGE = "image"
 TRANSCRIPTION = "transcription"
 
 
-def get_features(preprocessed_data):
-    features = []
-    for image_object in preprocessed_data:
-        print(image_object)
-        image_id = image_object[ID]
-        image = np.array(image_object[IMAGE])
-        image.reshape((200,800))
-        image_transcription = image_object[TRANSCRIPTION]
-        image_features = []
-        for column in range(image.shape[1] - 1):
-            image_features.append(
-                calculate_feature_vector(image[:, column], image[:, column + 1])
-            )
-        feature_object = pd.DataFrame(
-            {
-                ID: image_id,
-                TRANSCRIPTION: image_transcription,
-                FEATURES: normalize(np.array(image_features)),
-            }
+def get_features(image):
+    image_features = []
+    for column in range(image.shape[1] - 1):
+        image_features.append(
+            calculate_feature_vector(image[:, column], image[:, column + 1])
         )
-        features.append(feature_object)
-    return features
+    return normalize(np.array(image_features))
 
 
 def normalize(feature_vectors):
