@@ -5,17 +5,18 @@ from pathlib import Path
 import torch as th
 import tslearn as tl
 import csv
+import sys
+sys.path.append('../features')
+from features import get_features
 
 train_path = Path.cwd().parents[0] / "preprocessing" / "output" / "train"
 valid_path = Path.cwd().parents[0] / "preprocessing" / "output" / "valid"
 
-train_savepath = Path.cwd().parents[0] / "distances" / "output" / "train.csv"
-valid_savepath = Path.cwd().parents[0] / "distances" / "output" / "valid.csv"
-
-## plan
+train_savepath = Path.cwd().parents[0] / "distance" / "output" / "train_features.csv"
+valid_savepath = Path.cwd().parents[0] / "distance" / "output" / "valid_features.csv"
+out_path = Path.cwd().parents[0] / "distance" / "output" / "distances.csv"
 
 ## compute features for all images (training and testing data)
-
 
 def load_files_and_compute_features(load_path, save_path):
 
@@ -99,36 +100,68 @@ class WordMatcher:
         return th.cat((labels_sorted[:k], dist_sorted[:k], IDs_sorted[:k]), 0)
 
 
-if __name__ == "main":
-
-    if sys.argv[1] == True:
-
-        train = load_files_and_compute_features(train_path / "train.csv")
-
-        valid = load_files_and_compute_features(valid_path / "valid.csv")
-
-    else:
-
-        train = load_precomputed_features(train_savepath)
-
-        valid = valid_savepath(valid_savepath)
-
-    WM = WordMatcher(train[:, 2], train[:, 1], train[:, 0], train.shape[0])
-
-    # compute distance matrix
-
-    # dist_mat = np.zeros((train.shape[0], valid.shape[0]))
-
-    dist_mat = np.array(
-        [
-            [generalizedDTW(train[i, 0], valid[i, 0]) for i in range(train.shape[0])]
-            for j in range(valid.shape[0])
-        ]
-    )
-
-    # for i in train:
-    #     for j in valid:
-    #         dist_mat[i,j] = generalizedDTW(train[i, 0], valid[i, 0])
 
 
-    ## generate csv
+if sys.argv[1] == "1":
+
+    print('reached here !')
+
+    train = load_files_and_compute_features(train_path, train_savepath)
+
+    valid = load_files_and_compute_features(valid_path, valid_savepath)
+
+else:
+
+    train = load_precomputed_features(train_savepath)
+
+    valid = valid_savepath(valid_savepath)
+
+# WM = WordMatcher(train[:, 2], train[:, 1], train[:, 0], train.shape[0])
+
+# compute distance matrix
+
+# dist_mat = np.zeros((train.shape[0], valid.shape[0]))
+
+dist_mat = np.array(
+    [
+        [generalizedDTW(valid[i, 0], train[j, 0]) for j in range(train.shape[0])]
+        for i in range(valid.shape[0])
+    ]
+)
+
+# for i in train:
+#     for j in valid:
+#         dist_mat[i,j] = generalizedDTW(train[i, 0], valid[j, 0])
+
+
+## generate csv
+
+out = {}
+
+for i in range(valid.shape[0]):
+
+    temp_dict = {}
+
+    for k, v in zip(train[:, 0], dist_mat[i]):
+
+        temp_dict[k] = v
+
+    temp_dict_sorted = sorted(temp_dict.items(), key = lambda x : x[1])
+
+    #tuple_list = 
+
+    out.append({valid[i,1]: temp_dict_sorted})
+
+df = pd.DataFrame(out)
+
+df.to_csv(out_path)
+
+
+
+
+
+
+
+
+
+

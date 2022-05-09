@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 ROOT_PATH = prep.root_path
 TRANSCRIPTION_PATH = prep.transcription_path
 KEYWORD_PATH = ROOT_PATH / "task" / "keywords.txt"
-CLASSIFICATION_PATH = ROOT_PATH / "distance"
+CLASSIFICATION_PATH = ROOT_PATH / "distance" / "output" / "distances.csv"
 IMG_PATH = prep.img_root
 THRESHOLDS = range(5, 15)
 
@@ -46,20 +46,42 @@ def classification_values(classifications, transcriptions, keywords):
     false_positives = 0
     false_negatives = 0
     for word in keywords:
-        correct_ids = [word_id for word_id, keyword in transcriptions.items() if keyword == word]
-        classified_ids = [word_id for word_id, keyword in classifications.items() if keyword == word]
-        true_positives += sum(list(map(lambda word_id: 1 if word_id in correct_ids else 0, classified_ids)))
-        false_positives += sum(list(map(lambda word_id: 1 if word_id not in correct_ids else 0, classified_ids)))
-        false_negatives += sum(list(map(lambda word_id: 1 if word_id not in classified_ids else 0, correct_ids)))
+        correct_ids = [
+            word_id for word_id, keyword in transcriptions.items() if keyword == word
+        ]
+        classified_ids = [
+            word_id for word_id, keyword in classifications.items() if keyword == word
+        ]
+        true_positives += sum(
+            list(
+                map(lambda word_id: 1 if word_id in correct_ids else 0, classified_ids)
+            )
+        )
+        false_positives += sum(
+            list(
+                map(
+                    lambda word_id: 1 if word_id not in correct_ids else 0,
+                    classified_ids,
+                )
+            )
+        )
+        false_negatives += sum(
+            list(
+                map(
+                    lambda word_id: 1 if word_id not in classified_ids else 0,
+                    correct_ids,
+                )
+            )
+        )
     return true_positives, false_positives, false_negatives
 
 
 def plot_precision_recall_curve(precision_scores, recall_scores):
     figure, axis = plt.subplots(figsize=(6, 6))
-    axis.plot(recall_scores, precision_scores, label='DTW')
-    axis.set_xlabel('Recall')
-    axis.set_ylabel('Precision')
-    axis.legend(loc='center left')
+    axis.plot(recall_scores, precision_scores, label="DTW")
+    axis.set_xlabel("Recall")
+    axis.set_ylabel("Precision")
+    axis.legend(loc="center left")
 
 
 def calculate_average_precision(precision_scores, recall_scores):
@@ -68,7 +90,9 @@ def calculate_average_precision(precision_scores, recall_scores):
     average_precision = 0
     idx = 1
     while idx < len(precision_scores):
-        average_precision += (recall_scores[idx] - recall_scores[idx-1]) * precision_scores[idx]
+        average_precision += (
+            recall_scores[idx] - recall_scores[idx - 1]
+        ) * precision_scores[idx]
     return average_precision
 
 
@@ -81,8 +105,9 @@ def calculate_precision_and_recall():
         classifications = read_classifications(CLASSIFICATION_PATH, threshold)
         transcriptions = read_transcriptions(TRANSCRIPTION_PATH, classifications)
 
-        true_positives, false_positives, false_negatives = \
-            classification_values(classifications, transcriptions, keywords)
+        true_positives, false_positives, false_negatives = classification_values(
+            classifications, transcriptions, keywords
+        )
 
         try:
             precision = true_positives / (true_positives + false_positives)
@@ -100,3 +125,8 @@ def calculate_precision_and_recall():
     plot_precision_recall_curve(precision_scores, recall_scores)
     average_precision = calculate_average_precision(precision_scores, recall_scores)
     print("Average precision: " + str(average_precision))
+
+
+if __name__ == "main":
+
+    calculate_precision_and_recall()

@@ -15,13 +15,16 @@ def get_features(preprocessed_data):
         image_transcription = image_object[TRANSCRIPTION]
         image_features = []
         for column in range(image.shape[1] - 1):
-            image_features.append(calculate_feature_vector(image[:, column], image[:, column + 1]))
+            image_features.append(
+                calculate_feature_vector(image[:, column], image[:, column + 1])
+            )
         feature_object = pd.DataFrame(
             {
                 ID: image_id,
+                TRANSCRIPTION: image_transcription,
                 FEATURES: normalize(np.array(image_features)),
-                TRANSCRIPTION: image_transcription
-            })
+            }
+        )
         features.append(feature_object)
     return features
 
@@ -29,18 +32,22 @@ def get_features(preprocessed_data):
 def normalize(feature_vectors):
     transposed = feature_vectors.T
     for column in transposed:
-        transposed[column] = (transposed[column] - transposed[column].mean()) / transposed[column].std()
+        transposed[column] = (
+            transposed[column] - transposed[column].mean()
+        ) / transposed[column].std()
     return transposed.T
 
 
 def calculate_feature_vector(window, next_window):
-    return [upper_contour(window),
-            lower_contour(window),
-            number_of_black_white_transitions(window),
-            fraction_of_black_pixels(window),
-            fraction_of_black_pixels_between_uc_and_lc(window),
-            gradient_lc(window, next_window),
-            gradient_uc(window, next_window)]
+    return [
+        upper_contour(window),
+        lower_contour(window),
+        number_of_black_white_transitions(window),
+        fraction_of_black_pixels(window),
+        fraction_of_black_pixels_between_uc_and_lc(window),
+        gradient_lc(window, next_window),
+        gradient_uc(window, next_window),
+    ]
 
 
 def upper_contour(window):
@@ -61,7 +68,9 @@ def fraction_of_black_pixels(window):
 
 
 def fraction_of_black_pixels_between_uc_and_lc(window):
-    return np.count_nonzero(window[upper_contour(window):lower_contour(window)] == 0) / len(window)
+    return np.count_nonzero(
+        window[upper_contour(window) : lower_contour(window)] == 0
+    ) / len(window)
 
 
 def gradient_lc(window, next_window):
@@ -70,4 +79,3 @@ def gradient_lc(window, next_window):
 
 def gradient_uc(window, next_window):
     return upper_contour(window) - upper_contour(next_window)
-
