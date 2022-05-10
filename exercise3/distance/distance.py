@@ -6,10 +6,13 @@ import torch as th
 #import tslearn as tl
 import csv
 import sys
+import os
 sys.path.append('../features')
 from features import get_features
 from scipy.spatial.distance import euclidean
 from fastdtw import fastdtw
+
+from sympy.combinatorics import Permutation
 
 train_path = Path.cwd().parents[0] / "preprocessing" / "output" / "train"
 valid_path = Path.cwd().parents[0] / "preprocessing" / "output" / "valid"
@@ -27,11 +30,17 @@ def load_files_and_compute_features(load_path, save_path):
 
     for image in load_path.iterdir():
 
-        img_id = image.stem()
+        filename = os.path.basename(image)
+
+        img_id = os.path.splitext(filename)[0]
+
+        print(img_id)
 
         ids.append(img_id)
 
-        image_array = np.genfromtxt(image)
+        image_array = np.genfromtxt(image, delimiter = ',', dtype='uint8')
+
+        print(np.max(image_array))
 
         feature_array = get_features(image_array)  # modify images into feature vectors
 
@@ -39,22 +48,51 @@ def load_files_and_compute_features(load_path, save_path):
 
         np.savetxt(Path(save_path / f"{img_id}.csv"), feature_array, delimiter=",", fmt='%1i')
 
+    # sort ids and features lists the same way
 
+    ids_sorting = [(ids[i],i) for i in xrange(len(l))]
+    ids_sorting.sort()
+    ids_sorted, perm = zip(*L)
+    ids = [x for x in ids_sorted]
 
-    res = np.cat(t)  # final array
+    perm = Permutation([x for x in perm])
 
-    df = pd.DataFrame(res)
-
-    df.to_csv(save_path)
+    images = perm(images)
 
     return ids, images
 
 
 def load_precomputed_features(load_path):
 
-    res = np.loadtxt(load_path)
+    ids = []
+    images = []
 
-    return res
+    for image in load_path.iterdir():
+
+        filename = os.path.basename(image)
+
+        img_id = os.path.splitext(filename)[0]
+
+        print(img_id)
+
+        ids.append(img_id)
+
+        feature_array = np.genfromtxt(image, delimiter = ',', dtype='uint8')
+
+        images.append(feature_array)
+
+    # sort ids and features lists the same way
+
+    ids_sorting = [(ids[i],i) for i in xrange(len(l))]
+    ids_sorting.sort()
+    ids_sorted, perm = zip(*L)
+    ids = [x for x in ids_sorted]
+
+    perm = Permutation([x for x in perm])
+
+    images = perm(images)
+
+    return ids, images
 
 
 ## function to compute dtw between two arrays of features
@@ -62,88 +100,64 @@ def load_precomputed_features(load_path):
 def generalizedDTW(test, training):
     #return tl.metrics.dtw(test, training, "sakoe_chiba")
     distance, _ = fastdtw(x, y, dist=euclidean)
+    
     return distance
 
+def get_valid_transcriptions():
+
+    transcriptions = {}
+
+    file = open(transcription_path, "r")
+    
+    for line in file:
+        
+        img_id, transcription = line.split()
+
+        if img_id[0:3] in ["300","301","302","303","304"]:
+
+            transcriptions[id] = transcription
+
+    sorted_transcriptions = dict(sorted(transcriptions.items(), key=lambda item: item[0]))
+
+    return sorted_transcriptions
 
 ## sort images and return best guess (or best guesses)
-
-# WordMatcher class implementation adapted from : https://gist.github.com/JosueCom/7e89afc7f30761022d7747a501260fe3
-
-
-class WordMatcher:
-    def __init__(self, X=None, Y=None, Z=None, k=1):
-        self.train(X, Y, Z)
-        self.k = k
-
-    def train(self, X, Y, Z):
-        self.train_imgs = X
-        self.train_labels = Y
-        self.train_IDs = Z
-
-    def __call__(self, x):
-        return self.predict(x)
-
-    def predict(self, x):
-        if type(self.train_imgs) == type(None) or type(self.train_labels) == type(None):
-            name = self.__class__.__name__
-            raise RuntimeError(
-                f"{name} wasn't trained. Need to execute {name}.train() first"
-            )
-
-        dist = generalizedDTW(x, self.train_imgs)
-
-        # sort and return k best
-
-        dist_sorted, indices = th.sort(dist)
-        labels_sorted = self.train_label[indices]
-        IDs_sorted = self.train_IDs[indices]
-
-        return th.cat((labels_sorted[:k], dist_sorted[:k], IDs_sorted[:k]), 0)
-
-
-
 
 if sys.argv[1] == "1":
 
     print('reached here !')
 
-    train = load_files_and_compute_features(train_path, train_savepath)
+    train_ids, train_features = load_files_and_compute_features(train_path, train_savepath)
 
-    valid = load_files_and_compute_features(valid_path, valid_savepath)
+    valid_ids, valid_features = load_files_and_compute_features(valid_path, valid_savepath)
 
 else:
 
-    train = load_precomputed_features(train_savepath)
+    train_ids, train_features = load_precomputed_features(train_savepath)
 
-    valid = valid_savepath(valid_savepath)
-
-# WM = WordMatcher(train[:, 2], train[:, 1], train[:, 0], train.shape[0])
-
-# compute distance matrix
-
-# dist_mat = np.zeros((train.shape[0], valid.shape[0]))
+    valid_ids, valid_features = valid_savepath(valid_savepath)
 
 dist_mat = np.array(
     [
-        [generalizedDTW(valid[i, 0], train[j, 0]) for j in range(train.shape[0])]
+        [generalizedDTW(valid_features[i], train_features[j]) for j in range(train.shape[0])]
         for i in range(valid.shape[0])
     ]
 )
 
-# for i in train:
-#     for j in valid:
-#         dist_mat[i,j] = generalizedDTW(train[i, 0], valid[j, 0])
-
 
 ## generate csv
 
-out = {}
+out = []
+
+transcriptions = get_valid_transcriptions()
 
 for i in range(valid.shape[0]):
 
+    keyword = transcriptions[valid_ids[i]]
+
     temp_dict = {}
 
-    for k, v in zip(train[:, 0], dist_mat[i]):
+    for k, v in zip(train, dist_mat[i]):
 
         temp_dict[k] = v
 
@@ -153,12 +167,17 @@ for i in range(valid.shape[0]):
 
     flattened = [y for x in tuple_list for y in x]
 
-    out.append({valid[i,0]: flattened})
+    transcriptions.insert(0, keyword)
 
-df = pd.DataFrame(out)
+    out.append(transcriptions)
 
-df.to_csv(out_path)
+with open(out_path.as_posix(), 'wb') as csvfile:
 
+    filewriter = csv.writer(csvfile, delimiter=',')
+
+    for lst in out: 
+
+        filewriter.writerow(lst)
 
 
 

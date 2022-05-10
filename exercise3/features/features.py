@@ -9,6 +9,7 @@ TRANSCRIPTION = "transcription"
 
 def get_features(image):
     image_features = []
+    print(image)
     for column in range(image.shape[1] - 1):
         image_features.append(
             calculate_feature_vector(image[:, column], image[:, column + 1])
@@ -38,12 +39,30 @@ def calculate_feature_vector(window, next_window):
 
 
 def upper_contour(window):
-    return window.tolist().index(1)
+    
+    idx = np.nonzero(window)
+
+    print(idx)
+
+    if idx == ():
+        print(image.shape[1] - 1)
+
+        return image.shape[1] - 1 
+
+    return idx[0]
 
 
 def lower_contour(window):
-    idx = window[::-1].tolist().index(1)
-    return window.shape[1] - idx - 1
+
+    idx = np.nonzero(window)
+
+    print(idx)
+
+    if idx == ():
+        return 0 
+
+    return idx[-1]
+
 
 
 def number_of_black_white_transitions(window):
@@ -56,7 +75,7 @@ def fraction_of_black_pixels(window):
 
 def fraction_of_black_pixels_between_uc_and_lc(window):
     return np.count_nonzero(
-        window[upper_contour(window) : lower_contour(window)] == 0
+        window[upper_contour(window) : lower_contour(window)] 
     ) / len(window)
 
 

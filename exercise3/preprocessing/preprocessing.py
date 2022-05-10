@@ -87,6 +87,8 @@ for svg_path in svg_paths.iterdir():
         # Crop the image using slicing
         crop = out_translate[top:bot, left:right]
 
+        crop = (crop > 0).astype(int)
+
         print(".", end="", flush=True)
 
         if id[0:3] in ["300", "301", "302", "303", "304"]:
