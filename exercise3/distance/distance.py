@@ -97,7 +97,7 @@ def generalizedDTW(test, training):
     #return tl.metrics.dtw(test, training, "sakoe_chiba")
     distance, _ = fastdtw(test, training, dist=euclidean)
 
-    print(distance)
+    # print(distance)
     
     return distance
 
@@ -113,7 +113,7 @@ def get_valid_transcriptions():
 
         if img_id[0:3] in ["300","301","302","303","304"]:
 
-            transcriptions[id] = transcription
+            transcriptions[img_id] = transcription
 
     sorted_transcriptions = dict(sorted(transcriptions.items(), key=lambda item: item[0]))
 
@@ -144,11 +144,11 @@ if sys.argv[2] == "1":
         ]
     )
     
-    np.savetxt("./mat.csv", dist_mat, delimiter=',')
+    np.savetxt("./output/mat.csv", dist_mat, delimiter=',', fmt='%1.2i')
 
 else:
 
-    dist_mat = np.genfromtxt("./mat.csv", delimiter = ',', dtype='uint8')
+    dist_mat = np.genfromtxt("./output/mat.csv", delimiter = ',', dtype='uint8')
     
     
 ## generate csv
@@ -157,35 +157,35 @@ out = []
 
 transcriptions = get_valid_transcriptions()
 
-print(transcriptions)
-
 for i in range(len(valid_features)):
 
     keyword = transcriptions[valid_ids[i]]
 
-    temp_dict = {}
+    # temp_dict = {}
 
-    for k, v in zip(train, dist_mat[i]):
+    # for k, v in zip(train_ids, dist_mat[i]):
 
-        temp_dict[k] = v
+    #     temp_dict[k] = v
 
-    temp_dict_sorted = sorted(temp_dict.items(), key = lambda x : x[1])
+    temp_dict = {k : v for k in train_ids for v in dist_mat[i]}
 
-    tuple_list = temp_dict_sorted.items()
+    tuple_list = sorted(temp_dict.items(), key = lambda x : x[1])
 
     flattened = [y for x in tuple_list for y in x]
 
-    transcriptions.insert(0, keyword)
+    flattened.insert(0, keyword)
 
-    out.append(transcriptions)
+    out.append(flattened)
 
-with open(out_path.as_posix(), 'wb') as csvfile:
+df = pd.DataFrame(flattened)
 
-    filewriter = csv.writer(csvfile, delimiter=',')
+df.to_csv(out_path.as_posix(), index=False, header=False)
 
-    for lst in out: 
+# with open(out_path.as_posix(), 'w', newline="") as csvfile:
 
-        filewriter.writerow(lst)
+#     filewriter = csv.writer(csvfile, delimiter=',')
+
+#     filewriter.writerows(out)
 
 
 
