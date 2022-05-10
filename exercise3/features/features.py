@@ -9,20 +9,21 @@ TRANSCRIPTION = "transcription"
 
 def get_features(image):
     image_features = []
-    print(image)
-    for column in range(image.shape[1] - 1):
+    image = image.T
+    for line in range(image.shape[0] - 1):
         image_features.append(
-            calculate_feature_vector(image[:, column], image[:, column + 1])
+            calculate_feature_vector(image[line], image[line + 1])
         )
-    return normalize(np.array(image_features))
+    return normalize(np.array(image_features).T)
 
 
 def normalize(feature_vectors):
     transposed = feature_vectors.T
+    #print(transposed, transposed.shape)
     for column in transposed:
-        transposed[column] = (
-            transposed[column] - transposed[column].mean()
-        ) / transposed[column].std()
+        column = (
+            column - column.mean()
+        ) / column.std()
     return transposed.T
 
 
@@ -32,7 +33,7 @@ def calculate_feature_vector(window, next_window):
         lower_contour(window),
         number_of_black_white_transitions(window),
         fraction_of_black_pixels(window),
-        fraction_of_black_pixels_between_uc_and_lc(window),
+        #fraction_of_black_pixels_between_uc_and_lc(window),
         gradient_lc(window, next_window),
         gradient_uc(window, next_window),
     ]
@@ -40,25 +41,21 @@ def calculate_feature_vector(window, next_window):
 
 def upper_contour(window):
     
-    idx = np.nonzero(window)
+    idx = np.flatnonzero(window)
 
-    print(idx)
+    if idx.size == 0:
 
-    if idx == ():
-        print(image.shape[1] - 1)
-
-        return image.shape[1] - 1 
+        return window.shape[0] - 1 
 
     return idx[0]
 
 
 def lower_contour(window):
 
-    idx = np.nonzero(window)
+    idx = np.flatnonzero(window)
 
-    print(idx)
+    if idx.size == 0:
 
-    if idx == ():
         return 0 
 
     return idx[-1]

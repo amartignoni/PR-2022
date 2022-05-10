@@ -3,7 +3,7 @@ import numpy as np
 import pandas as pd
 from pathlib import Path
 import torch as th
-#import tslearn as tl
+import tslearn as tl
 import csv
 import sys
 import os
@@ -16,7 +16,7 @@ from sympy.combinatorics import Permutation
 
 train_path = Path.cwd().parents[0] / "preprocessing" / "output" / "train"
 valid_path = Path.cwd().parents[0] / "preprocessing" / "output" / "valid"
-
+transcription_path = Path.cwd().parents[0] / "data" / "ground-truth" / "transcription.txt"
 train_savepath = Path.cwd().parents[0] / "distance" / "output" / "train"
 valid_savepath = Path.cwd().parents[0] / "distance" / "output" / "valid"
 out_path = Path.cwd().parents[0] / "distance" / "output" / "distances.csv"
@@ -34,13 +34,9 @@ def load_files_and_compute_features(load_path, save_path):
 
         img_id = os.path.splitext(filename)[0]
 
-        print(img_id)
-
         ids.append(img_id)
 
         image_array = np.genfromtxt(image, delimiter = ',', dtype='uint8')
-
-        print(np.max(image_array))
 
         feature_array = get_features(image_array)  # modify images into feature vectors
 
@@ -50,12 +46,13 @@ def load_files_and_compute_features(load_path, save_path):
 
     # sort ids and features lists the same way
 
-    ids_sorting = [(ids[i],i) for i in xrange(len(l))]
+    ids_sorting = [(ids[i],i) for i in range(len(ids))]
     ids_sorting.sort()
-    ids_sorted, perm = zip(*L)
-    ids = [x for x in ids_sorted]
 
-    perm = Permutation([x for x in perm])
+    split = [[i for i,j in ids_sorting],[j for i,j in ids_sorting]]
+    ids = [x for x in split[0]]
+
+    perm = Permutation([x for x in split[1]])
 
     images = perm(images)
 
@@ -73,8 +70,6 @@ def load_precomputed_features(load_path):
 
         img_id = os.path.splitext(filename)[0]
 
-        print(img_id)
-
         ids.append(img_id)
 
         feature_array = np.genfromtxt(image, delimiter = ',', dtype='uint8')
@@ -83,12 +78,13 @@ def load_precomputed_features(load_path):
 
     # sort ids and features lists the same way
 
-    ids_sorting = [(ids[i],i) for i in xrange(len(l))]
+    ids_sorting = [(ids[i],i) for i in range(len(ids))]
     ids_sorting.sort()
-    ids_sorted, perm = zip(*L)
-    ids = [x for x in ids_sorted]
 
-    perm = Permutation([x for x in perm])
+    split = [[i for i,j in ids_sorting],[j for i,j in ids_sorting]]
+    ids = [x for x in split[0]]
+
+    perm = Permutation([x for x in split[1]])
 
     images = perm(images)
 
@@ -99,7 +95,9 @@ def load_precomputed_features(load_path):
 
 def generalizedDTW(test, training):
     #return tl.metrics.dtw(test, training, "sakoe_chiba")
-    distance, _ = fastdtw(x, y, dist=euclidean)
+    distance, _ = fastdtw(test, training, dist=euclidean)
+
+    print(distance)
     
     return distance
 
@@ -123,35 +121,45 @@ def get_valid_transcriptions():
 
 ## sort images and return best guess (or best guesses)
 
+# compute distances
+
 if sys.argv[1] == "1":
-
-    print('reached here !')
-
+    
     train_ids, train_features = load_files_and_compute_features(train_path, train_savepath)
-
+    
     valid_ids, valid_features = load_files_and_compute_features(valid_path, valid_savepath)
+    
+else:
+    
+    train_ids, train_features = load_precomputed_features(train_savepath)
+    
+    valid_ids, valid_features = load_precomputed_features(valid_savepath)
+
+if sys.argv[2] == "1":    
+    
+    dist_mat = np.array(
+        [
+            [generalizedDTW(i, j) for j in train_features]
+            for i in valid_features
+        ]
+    )
+    
+    np.savetxt("./mat.csv", dist_mat, delimiter=',')
 
 else:
 
-    train_ids, train_features = load_precomputed_features(train_savepath)
-
-    valid_ids, valid_features = valid_savepath(valid_savepath)
-
-dist_mat = np.array(
-    [
-        [generalizedDTW(valid_features[i], train_features[j]) for j in range(train.shape[0])]
-        for i in range(valid.shape[0])
-    ]
-)
-
-
+    dist_mat = np.genfromtxt("./mat.csv", delimiter = ',', dtype='uint8')
+    
+    
 ## generate csv
 
 out = []
 
 transcriptions = get_valid_transcriptions()
 
-for i in range(valid.shape[0]):
+print(transcriptions)
+
+for i in range(len(valid_features)):
 
     keyword = transcriptions[valid_ids[i]]
 
