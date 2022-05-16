@@ -35,8 +35,6 @@ for line in file:
 
 # PART 2: Images preprocessing
 for svg_path in svg_paths.iterdir():
-    # Main datastructure to store the preprocessed data
-    preprocessed_data = pd.DataFrame(columns=["id", "transcription", "image"])
 
     # Parsing SVG
     # parse needs a string
@@ -89,29 +87,18 @@ for svg_path in svg_paths.iterdir():
         # Crop the image using slicing
         crop = out_translate[top:bot, left:right]
 
-        # Add to preprocessed data: id, transcription and preprocessed image
-        # Need to pass an index to concatenate below
-        new_row = pd.DataFrame(
-            {
-                "id": id,
-                "transcription": transcriptions[id],
-                # Data needs to be 1D so wrap it in a list
-                "image": [crop],
-            },
-            index=[0],
-        )
+        crop = (crop > 0).astype(int)
 
-        preprocessed_data = pd.concat([preprocessed_data, new_row], ignore_index=True)
         print(".", end="", flush=True)
 
-    # Current solution to avoid not enough RAM -> one csv for each file
-    # TODO: store preprocessed data in another structure? What is the best for the tasks that come after?
-    if svg_path.stem in ['300','301','302','303','304']:
-        preprocessed_data.to_csv(output_path / "valid" / f"{svg_path.stem}.csv", index=False)
-    else: 
-        preprocessed_data.to_csv(output_path / "train" / f"{svg_path.stem}.csv", index=False)
+        if id[0:3] in ["300", "301", "302", "303", "304"]:
 
-    preprocessed_data.to_csv(output_path / f"{svg_path.stem}.csv", index=False)
+            np.savetxt(Path(output_path / "valid" / f"{id}.csv").as_posix(), crop, delimiter = ',', fmt='%1i')
+    
+        else:
+            
+            np.savetxt(Path(output_path / "train" / f"{id}.csv").as_posix(), crop, delimiter = ',', fmt='%1i')
+  
     print(f"{svg_path.stem} done!")
 
 # Christophe: Preprocessing
