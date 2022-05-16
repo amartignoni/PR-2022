@@ -10,13 +10,12 @@ def predict(train_set, train_labels, graph, k):
     for train_id, train_graph in train_set.items():
         # Add a tuple (label, GED distance)
         distance = nx.graph_edit_distance(graph, train_graph, timeout=0.2)
-        if distance = None:
+        if distance == None:
             distance = 200.0
         distances.append((train_labels[train_id], distance))
         print(".", end="", flush=True)
 
     # Sort according the distance
-    print(distances)
     distances.sort(key=lambda k: k[1])
 
     # Take only the label(s) for the k-NN
@@ -91,7 +90,7 @@ with open("mol.csv", 'w') as csvfile:
     for validation_id, validation_graph in tqdm(validation_set.items()):
         prediction = predict(train_set, train_labels, validation_graph, k)
         ground_truth_label = validation_labels[validation_id]
-        print(prediction, ground_truth_label)
+        print(prediction, validation_id, ground_truth_label)
         writer.writerow((validation_id, prediction))
         if prediction == ground_truth_label:
             correct_predictions += 1
