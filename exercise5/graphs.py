@@ -10,6 +10,8 @@ def predict(train_set, train_labels, graph, k):
     for train_id, train_graph in train_set.items():
         # Add a tuple (label, GED distance)
         distance = nx.graph_edit_distance(graph, train_graph, timeout=0.2)
+        if distance = None:
+            distance = 200.0
         distances.append((train_labels[train_id], distance))
         print(".", end="", flush=True)
 
