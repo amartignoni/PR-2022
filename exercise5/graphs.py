@@ -9,7 +9,7 @@ def predict(train_set, train_labels, graph, k):
     distances = []
     for train_id, train_graph in train_set.items():
         # Add a tuple (label, GED distance)
-        distance = nx.graph_edit_distance(graph, train_graph, timeout=0.2)
+        distance = nx.graph_edit_distance(graph, train_graph, timeout=0.3)
         if distance == None:
             distance = 200.0
         distances.append((train_labels[train_id], distance))
@@ -66,7 +66,6 @@ with open(root_path / "train.txt", "r") as train_file:
     for line in train_file:
         id, label = line.split()
         # Encode active molecule as 1 and inactive as 0
-        # label = 1 if label == "a" else 0
         train_set[id] = molecules[id]
         train_labels[id] = label
 
@@ -74,14 +73,13 @@ with open(root_path / "valid.txt", "r") as validation_file:
     for line in validation_file:
         id, label = line.split()
         # Encode active molecule as 1 and inactive as 0
-        # label = 1 if label == "a" else 0
         validation_set[id] = molecules[id]
         validation_labels[id] = label
 
 
 # PART 2: Classify each element of the validation set and compute accuracy
 # Hyperparameter for the k-NN classifier
-k = 7
+k = 10
 correct_predictions = 0
 n_predictions = len(validation_set)
 
@@ -91,7 +89,7 @@ with open("mol.csv", 'w') as csvfile:
         prediction = predict(train_set, train_labels, validation_graph, k)
         ground_truth_label = validation_labels[validation_id]
         print(prediction, validation_id, ground_truth_label)
-        writer.writerow((validation_id, prediction))
+        writer.writerow([validation_id, prediction])
         if prediction == ground_truth_label:
             correct_predictions += 1
 
