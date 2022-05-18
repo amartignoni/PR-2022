@@ -1,18 +1,15 @@
 import cv2 as cv
 import numpy as np
-import pandas as pd
 from pathlib import Path
-import torch as th
-import tslearn as tl
 import csv
-import sys
 import os
+import sys
 sys.path.append('../features')
 from features import get_features
 from scipy.spatial.distance import euclidean
 from fastdtw import fastdtw
-
 from sympy.combinatorics import Permutation
+import string
 
 train_path = Path.cwd().parents[0] / "preprocessing" / "output" / "train"
 valid_path = Path.cwd().parents[0] / "preprocessing" / "output" / "valid"
@@ -94,12 +91,34 @@ def load_precomputed_features(load_path):
 ## function to compute dtw between two arrays of features
 
 def generalizedDTW(test, training):
-    #return tl.metrics.dtw(test, training, "sakoe_chiba")
-    distance, _ = fastdtw(test, training, dist=euclidean)
 
-    # print(distance)
+    distance, _ = fastdtw(test, training, dist=euclidean)
     
     return distance
+
+def correct_string(string): 
+
+    string = string.split('-')
+
+    for i in range(len(string)):
+
+        char = string[i]
+
+        if char in ['s_0', 's_1', 's_2', 's_3', 's_4', 's_5', 's_6', 's_7', 's_8', 's_9', 's_s']:
+
+            string_corrected[i] = char[2]
+
+        else:
+
+            string_corrected[i] = char
+
+    alphanumeric = list(string.ascii_lowercase) + list(string.ascii_uppercase) + list(string.digits)
+
+    string_without_specials = filter(lambda char: char in alphanumeric, string)
+
+    final_string = "".join(string_without_specials)
+
+    return final_string
 
 def get_valid_transcriptions():
 
@@ -113,7 +132,7 @@ def get_valid_transcriptions():
 
         if img_id[0:3] in ["300","301","302","303","304"]:
 
-            transcriptions[img_id] = transcription
+            transcriptions[img_id] = correct_string(transcription)
 
     sorted_transcriptions = dict(sorted(transcriptions.items(), key=lambda item: item[0]))
 
@@ -123,7 +142,7 @@ def get_valid_transcriptions():
 
 # compute distances
 
-if sys.argv[1] == "1":
+if sys.argv[1] == "1": # pass 1 as first argument to compute features, anything else to load precomputed
     
     train_ids, train_features = load_files_and_compute_features(train_path, train_savepath)
     
@@ -135,7 +154,7 @@ else:
     
     valid_ids, valid_features = load_precomputed_features(valid_savepath)
 
-if sys.argv[2] == "1":    
+if sys.argv[2] == "1": # pass 1 as second argument to compute distance matrix, anything else to load precomputed
     
     dist_mat = np.array(
         [
@@ -161,31 +180,23 @@ for i in range(len(valid_features)):
 
     keyword = transcriptions[valid_ids[i]]
 
-    # temp_dict = {}
+    temp_dict = {k: v for (k,v) in zip(train_ids, dist_mat[i, :])}
 
-    # for k, v in zip(train_ids, dist_mat[i]):
+    tuple_list = sorted(temp_dict.items(), key = lambda x: x[1])
 
-    #     temp_dict[k] = v
-
-    temp_dict = {k : v for k in train_ids for v in dist_mat[i]}
-
-    tuple_list = sorted(temp_dict.items(), key = lambda x : x[1])
-
-    flattened = [y for x in tuple_list for y in x]
+    flattened = [item for kv_tuple in tuple_list for item in kv_tuple]
 
     flattened.insert(0, keyword)
 
+    print(flattened)
+
     out.append(flattened)
 
-df = pd.DataFrame(flattened)
+with open(out_path.as_posix(), 'w') as csvfile:
 
-df.to_csv(out_path.as_posix(), index=False, header=False)
+    writer = csv.writer(csvfile, delimiter=',')
 
-# with open(out_path.as_posix(), 'w', newline="") as csvfile:
-
-#     filewriter = csv.writer(csvfile, delimiter=',')
-
-#     filewriter.writerows(out)
+    writer.writerows(out)
 
 
 
