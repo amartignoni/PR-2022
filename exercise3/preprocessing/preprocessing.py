@@ -16,6 +16,13 @@ def path_to_contour(svg_path):
     return points
 
 
+def bounding_box(points):
+
+    x_coords, y_coords = zip(*points)
+
+    return min(x_coords), max(x_coords), min(y_coords), max(y_coords)
+
+
 # Creating paths
 root_path = Path.cwd().parents[0] / "data"
 svg_paths = root_path / "ground-truth" / "locations"
@@ -54,51 +61,45 @@ for svg_path in svg_paths.iterdir():
     orig_width = binarized_img.shape[1]
     orig_height = binarized_img.shape[0]
     # Size of output preprocessed image
-    width = 800
-    height = 200
+    width = 100
+    height = 100
 
-    for id, polygon in polygons.items():
-        # The extraction of the images was inspired by this post in Stackoverflow
-        # https://stackoverflow.com/questions/30901019/extracting-polygon-given-coordinates-from-an-image-using-opencv
+    for id_, polygon in polygons.items():
 
-        # Create the mask and apply it to the original image
-        mask = np.zeros((orig_height, orig_width))
-        cv.fillConvexPoly(mask, polygon, 1)
-        mask = mask.astype(bool)
-        out = np.zeros_like(binarized_img)
-        out[mask] = binarized_img[mask]
+        left, right, top, bot = bounding_box(polygon)
 
-        # Translate the present pixels in the center of the original image
-        mean_x, mean_y = polygon.mean(axis=0)
-        center_x, center_y = (out.shape[1] / 2, out.shape[0] / 2)
-        offset_x, offset_y = (-mean_x + center_x, -mean_y + center_y)
-        mx, my = np.meshgrid(np.arange(out.shape[1]), np.arange(out.shape[0]))
-        ox = (mx - offset_x).astype(np.float32)
-        oy = (my - offset_y).astype(np.float32)
-        out_translate = cv.remap(out, ox, oy, cv.INTER_LINEAR)
+        out = binarized_img[top:bot, left:right]
 
-        # Positions to crop
-        left = center_x - width / 2
-        right = center_x + width / 2
-        top = center_y - height / 2
-        bot = center_y + height / 2
-        # Conversion to integer
-        left, right, top, bot = np.floor([left, right, top, bot]).astype(np.int32)
-        # Crop the image using slicing
-        crop = out_translate[top:bot, left:right]
+        mask = np.ones(out.shape)
 
-        crop = (crop > 0).astype(int)
+        cv.fillPoly(mask, [polygon], 0)
+
+        out = out * mask
+
+        out = cv.resize(out, (200, 200), interpolation=cv.INTER_LINEAR)
+
+        out = out.astype(int)
 
         print(".", end="", flush=True)
 
-        if id[0:3] in ["300", "301", "302", "303", "304"]:
+        if id_[0:3] in ["300", "301", "302", "303", "304"]:
 
-            np.savetxt(Path(output_path / "valid" / f"{id}.csv").as_posix(), crop, delimiter = ',', fmt='%1i')
-    
+            np.savetxt(
+                Path(output_path / "valid" / f"{id_}.csv").as_posix(),
+                out,
+                delimiter=",",
+                fmt="%1i",
+            )
+
         else:
-            
-            np.savetxt(Path(output_path / "train" / f"{id}.csv").as_posix(), crop, delimiter = ',', fmt='%1i')
-  
+
+            np.savetxt(
+                Path(output_path / "train" / f"{id_}.csv").as_posix(),
+                out,
+                delimiter=",",
+                fmt="%1i",
+            )
+
     print(f"{svg_path.stem} done!")
 
 # Christophe: Preprocessing
