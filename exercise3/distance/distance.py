@@ -151,6 +151,7 @@ def correct_string(str):
 
     alphanumeric = list(string.ascii_letters) + list(string.digits)
 
+    # each element is now potentially a substring, so check that each substring is alphanumeric
     str_without_specials = filter(
         lambda substr: all([char in alphanumeric for char in substr]), str_corrected
     )
@@ -172,13 +173,7 @@ def get_valid_transcriptions():
 
         if img_id[0:3] in ["300", "301", "302", "303", "304"]:
 
-            transcription = correct_string(transcription)
-
-            if transcription == "":
-
-                print(img_id)
-
-            transcriptions[img_id] = transcription
+            transcriptions[img_id] = correct_string(transcription)
 
     sorted_transcriptions = dict(
         sorted(transcriptions.items(), key=lambda item: item[0])
