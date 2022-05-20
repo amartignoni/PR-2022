@@ -3,6 +3,7 @@ from pathlib import Path
 import csv
 import os
 import sys
+
 sys.path.append("../features")
 from features import get_features
 from scipy.spatial.distance import euclidean
@@ -106,21 +107,53 @@ def correct_string(str):
 
     str_ = str.split("-")
 
+    if len(str_) == 1:
+
+        if str_[0] == "s_GW":
+
+            return "GW"
+
+        elif str_[0] == "s_mi":
+
+            return "-"
+
     str_corrected = [
-        char[2]
+        char[2:]
         if char
-        in ["s_0", "s_1", "s_2", "s_3", "s_4", "s_5", "s_6", "s_7", "s_8", "s_9", "s_s"]
+        in [
+            "s_0",
+            "s_1",
+            "s_2",
+            "s_3",
+            "s_4",
+            "s_5",
+            "s_6",
+            "s_7",
+            "s_8",
+            "s_9",
+            "s_0th",
+            "s_1st",
+            "s_2nd",
+            "s_3rd",
+            "s_4th",
+            "s_5th",
+            "s_6th",
+            "s_7th",
+            "s_8th",
+            "s_9th",
+            "s_s",
+        ]
         else char
         for char in str_
     ]
 
-    alphanumeric = (
-        list(string.ascii_lowercase)
-        + list(string.ascii_uppercase)
-        + list(string.digits)
-    )
+    # correct signature
 
-    str_without_specials = filter(lambda char: char in alphanumeric, str_corrected)
+    alphanumeric = list(string.ascii_letters) + list(string.digits)
+
+    str_without_specials = filter(
+        lambda substr: all([char in alphanumeric for char in substr]), str_corrected
+    )
 
     final_str = "".join(str_without_specials)
 
@@ -139,7 +172,13 @@ def get_valid_transcriptions():
 
         if img_id[0:3] in ["300", "301", "302", "303", "304"]:
 
-            transcriptions[img_id] = correct_string(transcription)
+            transcription = correct_string(transcription)
+
+            if transcription == "":
+
+                print(img_id)
+
+            transcriptions[img_id] = transcription
 
     sorted_transcriptions = dict(
         sorted(transcriptions.items(), key=lambda item: item[0])
