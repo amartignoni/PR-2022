@@ -70,6 +70,9 @@ def top_k_matches(k, classifications, transcriptions, threshold):
             )
             idx += 1
 
+        # --------------------------------------------------
+        # used to create better results, but probably a hack
+        # --------------------------------------------------
         current_matches = post_treatment(current_matches, k)
 
         # append matches for this word to overall matches
