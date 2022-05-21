@@ -14,14 +14,13 @@ def get_features(image):
         image_features.append(
             calculate_feature_vector(image[line], image[line + 1])
         )
-    return normalize(np.array(image_features).T)
+    return normalize(np.array(image_features))
 
 
 def normalize(feature_vectors):
     transposed = feature_vectors.T
-    # print(transposed, transposed.shape)
-    for column in transposed:
-        column = (
+    for idx, column in enumerate(transposed):
+        transposed[idx] = (
                          column - column.mean()
                  ) / column.std()
     return transposed.T
@@ -33,7 +32,7 @@ def calculate_feature_vector(window, next_window):
         lower_contour(window),
         number_of_black_white_transitions(window),
         fraction_of_black_pixels(window),
-        # fraction_of_black_pixels_between_uc_and_lc(window),
+        fraction_of_black_pixels_between_uc_and_lc(window),
         gradient_lc(window, next_window),
         gradient_uc(window, next_window),
     ]
@@ -62,7 +61,7 @@ def number_of_black_white_transitions(window):
 
 
 def fraction_of_black_pixels(window):
-    return np.count_nonzero(window == 0) / len(window)
+    return np.count_nonzero(window) / len(window)
 
 
 def fraction_of_black_pixels_between_uc_and_lc(window):
