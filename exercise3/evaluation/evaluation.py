@@ -1,4 +1,6 @@
 import matplotlib.pyplot as plt
+import time
+from fpdf import FPDF
 from pathlib import Path
 from exercise3.string_utils import correct_string
 
@@ -6,7 +8,6 @@ ROOT_PATH = Path.cwd().parents[0]
 TRANSCRIPTION_PATH = ROOT_PATH / "data" / "ground-truth" / "transcription.txt"
 KEYWORD_PATH = ROOT_PATH / "data" / "task" / "keywords.txt"
 CLASSIFICATION_PATH = ROOT_PATH / "distance" / "output" / "distances.csv"
-THRESHOLDS = range(5, 6)
 
 
 def read_classifications(path):
@@ -40,62 +41,57 @@ def read_transcriptions(path):
     return transcriptions
 
 
-def classification_values(classifications, transcriptions, keywords):
-    true_positives = 0
-    false_positives = 0
-    false_negatives = 0
-    classified_words = set(classifications.values())
-    for word in classified_words:
-        correct_ids = [word_id for word_id, keyword in transcriptions.items() if keyword == word.replace("-", "")]
-        classified_ids = [
-            word_id for word_id, keyword in classifications.items() if keyword == word
-        ]
-        true_positives += sum(
-            list(
-                map(lambda word_id: 1 if word_id in correct_ids else 0, classified_ids)
-            )
-        )
-        false_positives += sum(
-            list(
-                map(
-                    lambda word_id: 1 if word_id not in correct_ids else 0,
-                    classified_ids
-                )
-            )
-        )
-        false_negatives += sum(
-            list(
-                map(
-                    lambda word_id: 1 if word_id not in classified_ids else 0,
-                    correct_ids
-                )
-            )
-        )
-    return true_positives, false_positives, false_negatives
-
-
-def top_k_matches(k, classifications, transcriptions):
+def top_k_matches(k, classifications, transcriptions, threshold):
     matches = []
+    no_matches = []
     transcription_words = list(transcriptions.values())
     for word in classifications.keys():
+
+        # get ids from transcriptions associated to this word
         ids = [word_id for word_id in transcriptions.keys() if transcriptions[word_id] == word]
+
+        # get ids from classifications associated to this word (up to a specified threshold)
+        classified_ids = [y[0] for y in classifications[word][:threshold+1]]
         if word not in transcription_words:
             print(f'No transcription for word: {word}')
             continue
-        elif set(ids).isdisjoint([y[0] for y in classifications[word]]):
-            print(f'None of the classified word_ids for word \'{word}\' '
-                  f'was found in associated ids in the transcriptions')
+        elif set(ids).isdisjoint(classified_ids):
+            print(f'None of the classified ids found among the associated ids in the transcriptions for \'{word}\'')
+            no_matches.append(word)
             continue
+
+        # create match-list indicating whether a classified id corresponds to the word (1) or not (0),
+        # i.e checking if id is among ids for this word according to the transcriptions
         idx = 0
         current_matches = []
-        while sum([match[0] for match in current_matches]) < k and idx < 2433:
+        while sum([match[0] for match in current_matches]) < k and idx < threshold:
             current_matches.append(
                 (int(transcriptions[classifications[word][idx][0]] == word), classifications[word][idx][1])
             )
             idx += 1
+
+        current_matches = post_treatment(current_matches, k)
+
+        # append matches for this word to overall matches
         matches.extend(current_matches)
+
+    # sort matches by dissimilarity in ascending order
     matches.sort(key=lambda match: match[1])
-    return [match[0] for match in matches]
+    return [match[0] for match in matches], no_matches
+
+
+def post_treatment(current_matches, k):
+
+    # if number of matches smaller than k, cutoff after last match (i.e. last occurrence of a 1)
+    if sum([match[0] for match in current_matches]) < k:
+        last_match_idx = ''.join([str(match[0]) for match in current_matches]).rindex('1')
+        current_matches = current_matches[:last_match_idx + 1]
+
+    # start match-list at first match (i.e. first occurrence of a 1)
+    first_match_idx = [match[0] for match in current_matches].index(1)
+    current_matches = current_matches[first_match_idx:]
+
+    return current_matches
 
 
 def precision_recall(matches):
@@ -113,13 +109,8 @@ def plot_precision_recall_curve(precision_scores, recall_scores):
     plt.plot(recall_scores, precision_scores, label='DTW')
     plt.xlabel('Recall')
     plt.ylabel('Precision')
-    plt.legend(loc='center left')
+    plt.legend(loc='upper right')
     plt.savefig('./precision_recall_curve.png')
-    # figure, axis = plt.subplots(figsize=(6, 6))
-    # axis.plot(recall_scores, precision_scores, label="DTW")
-    # axis.set_xlabel("Recall")
-    # axis.set_ylabel("Precision")
-    # axis.legend(loc="center left")
 
 
 def calculate_average_precision(precision_scores, recall_scores):
@@ -135,17 +126,69 @@ def calculate_average_precision(precision_scores, recall_scores):
     return average_precision
 
 
+def evaluation_report(no_matches, avg_precision, time_elapsed):
+
+    # initialize new doc with empty page
+    pdf = FPDF()
+    pdf.add_page()
+
+    # add title
+    pdf.set_xy(0.0, 0.0)
+    pdf.set_font('Arial', 'B', 16)
+    pdf.set_text_color(220, 50, 50)
+    pdf.cell(w=210.0, h=40.0, align='C', txt="Evaluation", border=0)
+
+    # add list words with no match
+    text = "For the following words no match was found, i.e none of the classified ids for this word was found among " \
+           "the ids associated to this word in the transcriptions: \n"
+    pdf.set_xy(13.0, 30.0)
+    pdf.set_font('Arial', 'B', 8)
+    pdf.set_text_color(0, 0, 0)
+    pdf.multi_cell(w=180.0, h=4.0, align='l', txt=text, border=0)
+
+    no_matches = ''.join([word + ', ' for word in no_matches])
+    pdf.set_xy(13.0, 40.0)
+    pdf.set_font('Arial', '', 8)
+    pdf.multi_cell(w=180.0, h=4.0, align='L', txt=no_matches, border=0)
+
+    # add plot
+    pdf.set_xy(13.0, 130.0)
+    pdf.set_font('Arial', 'B', 8)
+    pdf.multi_cell(w=180.0, h=4.0, align='L', txt='PRECISION-RECALL-CURVE', border=0)
+    pdf.set_xy(13.0, 134.0)
+    pdf.image('./precision_recall_curve.png', link='', type='', w=130, h=130)
+
+    # avg precision and time elapsed
+    avg_precision = "Average precision calculated: " + str(avg_precision)
+    pdf.set_xy(13.0, 267.0)
+    pdf.set_font('Arial', 'B', 8)
+    pdf.cell(w=180.0, h=4.0, align='L', txt=avg_precision, border=0)
+
+    time_elapsed = "Time for evaluation: " + str(time_elapsed) + " seconds"
+    pdf.set_xy(13.0, 271.0)
+    pdf.set_font('Arial', 'B', 8)
+    pdf.cell(w=180.0, h=4.0, align='L', txt=time_elapsed, border=0)
+
+    pdf.output('./evaluation_report.pdf', 'F')
+
+
 def run_evaluation():
+    start = time.time()
     classifications = read_classifications(CLASSIFICATION_PATH)
     transcriptions = read_transcriptions(TRANSCRIPTION_PATH)
 
-    matches = top_k_matches(5, classifications, transcriptions)
+    matches, no_matches = top_k_matches(5, classifications, transcriptions, threshold=500)
 
     precision, recall = precision_recall(matches)
 
     plot_precision_recall_curve(precision, recall)
     average_precision = calculate_average_precision(precision, recall)
     print("Average precision: " + str(average_precision))
+
+    end = time.time()
+    print("Time for evaluation: " + str(end - start) + " seconds")
+
+    evaluation_report(no_matches, average_precision, end - start)
 
 
 if __name__ == "__main__":
