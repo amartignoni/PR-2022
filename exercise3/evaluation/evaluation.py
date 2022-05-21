@@ -8,6 +8,7 @@ ROOT_PATH = Path.cwd().parents[0]
 TRANSCRIPTION_PATH = ROOT_PATH / "data" / "ground-truth" / "transcription.txt"
 KEYWORD_PATH = ROOT_PATH / "data" / "task" / "keywords.txt"
 CLASSIFICATION_PATH = ROOT_PATH / "distance" / "output" / "distances.csv"
+THRESHOLD = 500
 
 
 def read_classifications(path):
@@ -129,7 +130,7 @@ def calculate_average_precision(precision_scores, recall_scores):
     return average_precision
 
 
-def evaluation_report(no_matches, avg_precision, time_elapsed, threshold):
+def evaluation_report(no_matches, avg_precision, time_elapsed):
 
     # initialize new doc with empty page
     pdf = FPDF()
@@ -143,7 +144,7 @@ def evaluation_report(no_matches, avg_precision, time_elapsed, threshold):
 
     # add list words with no match
     text = f'For the following words no match was found, i.e none of the classified ids for this word was found ' \
-           f'among the ids associated to this word in the transcriptions for a pre-specified threshold ({threshold}):\n'
+           f'among the ids associated to this word in the transcriptions for a pre-specified threshold ({THRESHOLD}):\n'
     pdf.set_xy(13.0, 30.0)
     pdf.set_font('Arial', 'B', 8)
     pdf.set_text_color(0, 0, 0)
@@ -176,12 +177,11 @@ def evaluation_report(no_matches, avg_precision, time_elapsed, threshold):
 
 
 def run_evaluation():
-    threshold = 500
     start = time.time()
     classifications = read_classifications(CLASSIFICATION_PATH)
     transcriptions = read_transcriptions(TRANSCRIPTION_PATH)
 
-    matches, no_matches = top_k_matches(5, classifications, transcriptions, threshold)
+    matches, no_matches = top_k_matches(5, classifications, transcriptions, THRESHOLD)
 
     precision, recall = precision_recall(matches)
 
@@ -192,7 +192,7 @@ def run_evaluation():
     end = time.time()
     print("Time for evaluation: " + str(end - start) + " seconds")
 
-    evaluation_report(no_matches, average_precision, end - start, threshold)
+    evaluation_report(no_matches, average_precision, end - start)
 
 
 if __name__ == "__main__":
