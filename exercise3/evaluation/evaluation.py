@@ -129,7 +129,7 @@ def calculate_average_precision(precision_scores, recall_scores):
     return average_precision
 
 
-def evaluation_report(no_matches, avg_precision, time_elapsed):
+def evaluation_report(no_matches, avg_precision, time_elapsed, threshold):
 
     # initialize new doc with empty page
     pdf = FPDF()
@@ -142,8 +142,8 @@ def evaluation_report(no_matches, avg_precision, time_elapsed):
     pdf.cell(w=210.0, h=40.0, align='C', txt="Evaluation", border=0)
 
     # add list words with no match
-    text = "For the following words no match was found, i.e none of the classified ids for this word was found among " \
-           "the ids associated to this word in the transcriptions: \n"
+    text = f'For the following words no match was found, i.e none of the classified ids for this word was found ' \
+           f'among the ids associated to this word in the transcriptions for a pre-specified threshold ({threshold}):\n'
     pdf.set_xy(13.0, 30.0)
     pdf.set_font('Arial', 'B', 8)
     pdf.set_text_color(0, 0, 0)
@@ -176,11 +176,12 @@ def evaluation_report(no_matches, avg_precision, time_elapsed):
 
 
 def run_evaluation():
+    threshold = 500
     start = time.time()
     classifications = read_classifications(CLASSIFICATION_PATH)
     transcriptions = read_transcriptions(TRANSCRIPTION_PATH)
 
-    matches, no_matches = top_k_matches(5, classifications, transcriptions, threshold=500)
+    matches, no_matches = top_k_matches(5, classifications, transcriptions, threshold)
 
     precision, recall = precision_recall(matches)
 
@@ -191,7 +192,7 @@ def run_evaluation():
     end = time.time()
     print("Time for evaluation: " + str(end - start) + " seconds")
 
-    evaluation_report(no_matches, average_precision, end - start)
+    evaluation_report(no_matches, average_precision, end - start, threshold)
 
 
 if __name__ == "__main__":
