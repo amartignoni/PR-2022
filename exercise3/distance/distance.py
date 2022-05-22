@@ -36,7 +36,7 @@ def load_files_and_compute_features(load_path, save_path):
 
         ids.append(img_id)
 
-        image_array = np.genfromtxt(image, delimiter=",", dtype="uint8")
+        image_array = np.genfromtxt(image, delimiter=",", dtype="float64")
 
         feature_array = get_features(image_array)  # modify images into feature vectors
 
@@ -74,7 +74,7 @@ def load_precomputed_features(load_path):
 
         ids.append(img_id)
 
-        feature_array = np.genfromtxt(image, delimiter=",", dtype="uint8")
+        feature_array = np.genfromtxt(image, delimiter=",", dtype="float64")
 
         images.append(feature_array)
 
