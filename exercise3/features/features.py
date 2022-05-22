@@ -1,5 +1,5 @@
 import numpy as np
-import pandas as pd
+import scipy.stats as stats
 
 ID = "id"
 FEATURES = "features"
@@ -9,10 +9,9 @@ TRANSCRIPTION = "transcription"
 
 def get_features(image):
     image_features = []
-    image = image.T
-    for line in range(image.shape[0] - 1):
+    for col_idx in range(image.shape[1] - 1):
         image_features.append(
-            calculate_feature_vector(image[line], image[line + 1])
+            calculate_feature_vector(image[:, col_idx], image[:, col_idx + 1])
         )
     return normalize(np.array(image_features))
 
@@ -20,10 +19,8 @@ def get_features(image):
 def normalize(feature_vectors):
     transposed = feature_vectors.T
     for idx, column in enumerate(transposed):
-        transposed[idx] = (
-                         column - column.mean()
-                 ) / column.std()
-    return transposed.T
+        transposed[idx] = stats.zscore(column)
+    return transposed
 
 
 def calculate_feature_vector(window, next_window):
@@ -57,7 +54,7 @@ def lower_contour(window):
 
 
 def number_of_black_white_transitions(window):
-    return np.count_nonzero(window[:-1] < window[1:])
+    return np.count_nonzero(window[:-1] > window[1:])
 
 
 def fraction_of_black_pixels(window):
@@ -65,9 +62,11 @@ def fraction_of_black_pixels(window):
 
 
 def fraction_of_black_pixels_between_uc_and_lc(window):
+    if np.count_nonzero(window) == 0:
+        return 0
     return np.count_nonzero(
-        window[upper_contour(window): lower_contour(window)]
-    ) / len(window)
+        window[upper_contour(window): lower_contour(window)+1]
+    ) / len(window[upper_contour(window): lower_contour(window)+1])
 
 
 def gradient_lc(window, next_window):

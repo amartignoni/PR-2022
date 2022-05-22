@@ -74,9 +74,11 @@ for svg_path in svg_paths.iterdir():
 
         cv.fillPoly(mask, [polygon], 0)
 
+        out = np.where(out > 0, 1, out)
+
         out = out * mask
 
-        out = cv.resize(out, (200, 200), interpolation=cv.INTER_LINEAR)
+        out = cv.resize(out, (200, 200), interpolation=cv.INTER_NEAREST)
 
         out = out.astype(int)
 

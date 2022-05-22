@@ -8,7 +8,7 @@ ROOT_PATH = Path.cwd().parents[0]
 TRANSCRIPTION_PATH = ROOT_PATH / "data" / "ground-truth" / "transcription.txt"
 KEYWORD_PATH = ROOT_PATH / "data" / "task" / "keywords.txt"
 CLASSIFICATION_PATH = ROOT_PATH / "distance" / "output" / "distances.csv"
-THRESHOLD = 500
+THRESHOLD = 1000
 
 
 def read_classifications(path):
@@ -71,31 +71,12 @@ def top_k_matches(k, classifications, transcriptions, threshold):
             )
             idx += 1
 
-        # --------------------------------------------------
-        # used to create better results, but probably a hack
-        # --------------------------------------------------
-        current_matches = post_treatment(current_matches, k)
-
         # append matches for this word to overall matches
         matches.extend(current_matches)
 
     # sort matches by dissimilarity in ascending order
     matches.sort(key=lambda match: match[1])
     return [match[0] for match in matches], no_matches
-
-
-def post_treatment(current_matches, k):
-
-    # if number of matches smaller than k, cutoff after last match (i.e. last occurrence of a 1)
-    if sum([match[0] for match in current_matches]) < k:
-        last_match_idx = ''.join([str(match[0]) for match in current_matches]).rindex('1')
-        current_matches = current_matches[:last_match_idx + 1]
-
-    # start match-list at first match (i.e. first occurrence of a 1)
-    first_match_idx = [match[0] for match in current_matches].index(1)
-    current_matches = current_matches[first_match_idx:]
-
-    return current_matches
 
 
 def precision_recall(matches):

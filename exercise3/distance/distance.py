@@ -43,7 +43,7 @@ def load_files_and_compute_features(load_path, save_path):
         images.append(feature_array)
 
         np.savetxt(
-            Path(save_path / f"{img_id}.csv"), feature_array, delimiter=",", fmt="%1i"
+            Path(save_path / f"{img_id}.csv"), feature_array, delimiter=",", fmt="%1f"
         )
 
     # sort ids and features lists the same way
@@ -190,6 +190,7 @@ if (
     sys.argv[1] == "1"
 ):  # pass 1 as first argument to compute features, anything else to load precomputed
 
+    print("Calculating features...")
     train_ids, train_features = load_files_and_compute_features(
         train_path, train_savepath
     )
@@ -197,6 +198,7 @@ if (
     valid_ids, valid_features = load_files_and_compute_features(
         valid_path, valid_savepath
     )
+    print("...done\n")
 
 else:
 
@@ -208,9 +210,11 @@ if (
     sys.argv[2] == "1"
 ):  # pass 1 as second argument to compute distance matrix, anything else to load precomputed
 
+    print("Calculating distances...")
     dist_mat = np.array(
         [[generalizedDTW(i, j) for j in train_features] for i in valid_features]
     )
+    print("...done\n")
 
     np.savetxt("./output/mat.csv", dist_mat, delimiter=",", fmt="%1f")
 
