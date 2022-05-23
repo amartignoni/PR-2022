@@ -8,9 +8,11 @@ from tqdm import tqdm
 
 
 # Loading the training and test sets
-train_loaded_csv = pd.read_csv("mnist_train.csv")
-test_loaded_csv = pd.read_csv("mnist_test.csv")
+train_loaded_csv = pd.read_csv("mnist_train.csv", header=None)
+validation_loaded_csv = pd.read_csv("mnist_validation.csv", header=None)
+test_loaded_csv = pd.read_csv("mnist_test.csv", header=None)
 train_data = train_loaded_csv.to_numpy()
+validation_data = validation_loaded_csv.to_numpy()
 test_data = test_loaded_csv.to_numpy()
 # Get a sample to optimize hyperparameters (can change the size)
 # Use a seed for reproducibility
@@ -99,10 +101,14 @@ sorted.to_csv("scores.csv")
 if best_kernel == 'linear':
     print(f"Training a {best_kernel} kernel with C={best_c}")
     best_model = svm.SVC(kernel=best_kernel, C=best_c)
-    accuracy = train_eval_model(best_model, train_data, test_data)
+    accuracy = train_eval_model(best_model, train_data, validation_data)
+    competition_predictions = best_model.predict(test_data)
+    np.savetxt("svm.txt", competition_predictions, fmt='%d')
     print(f"SVM on MNIST terminated with parameters: kernel {kernel}, C={best_c} with accuracy {accuracy}")
 else:
     print(f"Training a {best_kernel} kernel with C={best_c}, gamma={best_gamma}")
     best_model = svm.SVC(kernel=best_kernel, C=best_c, gamma=best_gamma)
-    accuracy = train_eval_model(best_model, train_data, test_data)
+    accuracy = train_eval_model(best_model, train_data, validation_data)
+    competition_predictions = best_model.predict(test_data)
+    np.savetxt("svm.txt", competition_predictions, fmt='%d')
     print(f"SVM on MNIST terminated with parameters: kernel {kernel}, C={best_c}, gamma={best_gamma} with accuracy {accuracy}")
