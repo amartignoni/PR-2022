@@ -3,6 +3,7 @@ from pathlib import Path
 import csv
 import os
 import sys
+from tslearn.metrics import dtw
 sys.path.append("../features")
 from features import get_features
 from scipy.spatial.distance import euclidean
@@ -97,7 +98,8 @@ def load_precomputed_features(load_path):
 
 def generalizedDTW(test, training):
 
-    distance, _ = fastdtw(test, training, dist=euclidean)
+    #distance, _ = fastdtw(test, training, dist=euclidean)
+    distance = dtw(test.T, training.T, global_constraint="sakoe_chiba")
 
     return distance
 
