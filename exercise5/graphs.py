@@ -3,17 +3,20 @@ from xml.dom import minidom
 import networkx as nx
 from tqdm import tqdm
 import csv
+import gmatch4py as gm
+import numpy as np
 
 
 def predict(train_set, train_labels, graph, k):
     distances = []
     for train_id, train_graph in train_set.items():
         # Add a tuple (label, GED distance)
-        distance = nx.graph_edit_distance(graph, train_graph, timeout=0.3)
+        ged = gm.GraphEditDistance(1,1,1,1)
+        matrix_distance = ged.compare([graph, train_graph], None)
+        distance = np.max(matrix_distance)
         if distance == None:
             distance = 200.0
         distances.append((train_labels[train_id], distance))
-        print(".", end="", flush=True)
 
     # Sort according the distance
     distances.sort(key=lambda k: k[1])
@@ -107,6 +110,7 @@ k = 10
 correct_predictions = 0
 n_predictions = len(validation_set)
 
+# Run on the validation set
 # with open("mol_val.csv", 'w') as csvfile:
 #     writer = csv.writer(csvfile, delimiter=",")
 #     for validation_id, validation_graph in tqdm(validation_set.items()):
@@ -119,6 +123,7 @@ n_predictions = len(validation_set)
 
 # print(f"\n{k}-NN ended, accuracy: {correct_predictions / n_predictions}\n")
 
+# Run on the test set (competition)
 with open("mol.csv", 'w') as csvfile:
     writer = csv.writer(csvfile, delimiter=",")
     for test_id, test_graph in tqdm(test_set.items()):
