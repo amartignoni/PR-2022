@@ -3,6 +3,9 @@ import torch
 import torch.nn as nn
 import torchvision
 import matplotlib.pyplot as plt
+from pathlib import Path
+from PIL import Image, ImageOps
+import numpy as np
 
 
 ## creation of a dataloader using the MNIST dataset in png-format
@@ -36,6 +39,20 @@ def load_test():
 
     return test_loader
 
+def load_challenge():
+    path = Path.cwd().parents[0] / "2b" / "data" / "mnist_test_png"
+
+    img_dict = {}
+
+    sortcond = lambda stem: stem.spli
+
+    for image in path.iterdir():
+
+        img_dict[image.stem] = torch.from_numpy(np.array(ImageOps.grayscale(Image.open(image))))
+
+    sorted_dict = dict(sorted(img_dict.items(), key=lambda item: int(item[0].split("-")[-1])))
+
+    return sorted_dict
 
 class MLP(nn.Module):  ## adapted from an example in the pytorch documentation
     def __init__(self, hidden_neurons):
@@ -45,8 +62,10 @@ class MLP(nn.Module):  ## adapted from an example in the pytorch documentation
         self.layers = nn.Sequential(  ## three layers, hidden layer adaptable
             nn.Linear(784, hidden_neurons),  # input layer
             nn.ReLU(),  # activation function
+            nn.Dropout(), # dropout to prevent reliance on a single neuron "path"
             nn.Linear(hidden_neurons, hidden_neurons),  # hidden layer of adaptable size
             nn.ReLU(),
+            nn.Dropout(),
             nn.Linear(hidden_neurons, 10),  # output layer
         )
 
@@ -59,7 +78,7 @@ class MLP(nn.Module):  ## adapted from an example in the pytorch documentation
 ## define parameters
 neurons_middle_layer = 60  # from 10 to 100, dialed to 60
 learning_rate = 0.1  # from 0.001 to 0.1, dialed to 0.1
-batch_size = 256  # change if performance requires it, we settled on 256 for training on Google Colab
+batch_size = 512  # change if performance requires it, we settled on 256 for training on Google Colab
 epochs = 100  # determined using performance data
 
 ## check gpu availability
@@ -131,6 +150,9 @@ def test_loop(dataloader, model, loss_fn):
     print(f"Test : \n Accuracy: {(100*correct):>0.1f}%, Averag loss: {te_loss:>8f} \n")
     return correct, te_loss
 
+challenge_images = load_challenge()
+
+print(challenge_images)
 
 for e in range(epochs):
     print(f"Epoch {e+1}\n-------------------------------")
@@ -144,6 +166,14 @@ for e in range(epochs):
     test_acc.append(test_accuracy)
     test_loss.append(test_err)
 print("Done!")
+
+with open("mlp.txt", "w") as txtwriter:
+
+    for (k, v) in challenge_images:
+
+        txtwriter.write(model(v))
+        txtwriter.write("\n")
+
 
 plot_results = True
 
