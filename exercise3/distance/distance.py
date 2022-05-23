@@ -3,7 +3,6 @@ from pathlib import Path
 import csv
 import os
 import sys
-
 sys.path.append("../features")
 from features import get_features
 from scipy.spatial.distance import euclidean

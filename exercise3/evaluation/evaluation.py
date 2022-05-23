@@ -1,8 +1,10 @@
+import sys
 import matplotlib.pyplot as plt
 import time
 from fpdf import FPDF
 from pathlib import Path
-from exercise3.string_utils import correct_string
+sys.path.append("..")
+from string_utils import correct_string
 
 ROOT_PATH = Path.cwd().parents[0]
 TRANSCRIPTION_PATH = ROOT_PATH / "data" / "ground-truth" / "transcription.txt"
