@@ -216,3 +216,7 @@ predictions = np.argmax(prob, axis=1)
 accuracy = accuracy_score(test_y, predictions)
 print("Final Test Accuracy: {}, Final Test Loss: {}".format(accuracy, final_test_loss))
 test_accuracies.append(accuracy)
+
+# Save model
+torch.save(model, "complete_model.pth")
+
