@@ -30,6 +30,7 @@ valid_savepath = Path.cwd().parents[0] / "competition" / "output" / "distance" /
 out_path = Path.cwd().parents[0] / "competition" / "output" / "distance" / "distances.csv"
 transcription_path = root_path / "task" / "keywords.txt"
 train_savepath = Path("../distance/output/train")
+test_savepath = Path("../distance/output/valid")
 
 
 def path_to_contour(svg_path):
@@ -180,29 +181,13 @@ for svg_path in svg_paths.iterdir():
 
 
 # PART 2: distance calculation
-train_ids, train_features = load_precomputed_features(train_savepath)
-
-valid_ids, valid_features = load_files_and_compute_features(
-        valid_path, valid_savepath
-    )
-
-dist_mat = np.array(
-        [[generalizedDTW(i, j) for j in train_features] for i in valid_features]
-    )
-
-np.savetxt("./output/mat.csv", dist_mat, delimiter=",", fmt="%1f")
-
-
-## generate csv
-
 def get_transcriptions():
     transcriptions = {}
     file = open(transcription_path, "r")
     for line in file:
-        transcription, img_id = line.split()
-
-        if img_id[0:3] in ["300", "301", "302", "303", "304"]:
-            transcriptions[img_id] = correct_string(transcription)
+        transcription, img_id = line.split(",")
+        img_id = img_id.strip("\n")
+        transcriptions[img_id] = correct_string(transcription)
 
     sorted_transcriptions = dict(
         sorted(transcriptions.items(), key=lambda item: item[0])
@@ -210,15 +195,40 @@ def get_transcriptions():
 
     return sorted_transcriptions
 
-out = []
-
 transcriptions = get_transcriptions()
+
+train_ids, train_features = load_precomputed_features(train_savepath)
+test_ids, test_features = load_precomputed_features(test_savepath)
+train_ids.append(test_ids)
+train_features.append(test_features)
+filtered_train_ids = []
+filtered_train_features = []
+
+for i in range(len(train_ids)-1):
+    if train_ids[i] in transcriptions.keys():
+        filtered_train_ids.append(train_ids[i])
+        filtered_train_features.append(train_features[i])
+
+valid_ids, valid_features = load_files_and_compute_features(
+        valid_path, valid_savepath
+    )
+
+dist_mat = np.array(
+        [[generalizedDTW(i, j) for j in filtered_train_features] for i in valid_features]
+    )
+
+np.savetxt("./output/mat.csv", dist_mat, delimiter=",", fmt="%1f")
+
+
+## generate csv
+
+out = []
 
 for i in range(len(valid_features)):
 
     keyword = transcriptions[valid_ids[i]]
 
-    temp_dict = {k: v for (k, v) in zip(train_ids, dist_mat[i, :])}
+    temp_dict = {k: v for (k, v) in zip(filtered_train_ids, dist_mat[i, :])}
 
     tuple_list = sorted(temp_dict.items(), key=lambda x: x[1])
 
