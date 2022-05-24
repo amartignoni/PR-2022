@@ -198,10 +198,10 @@ def get_transcriptions():
 
 transcriptions = get_transcriptions()
 
-#train_ids, train_features = load_precomputed_features(train_savepath)
+train_ids, train_features = load_precomputed_features(train_savepath)
 test_ids, test_features = load_precomputed_features(test_savepath)
-#train_ids = train_ids + test_ids
-#train_features = train_features + test_features
+train_ids = train_ids + test_ids
+train_features = train_features + test_features
 filtered_train_ids = []
 filtered_train_features = []
 

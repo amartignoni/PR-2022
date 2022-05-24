@@ -51,7 +51,7 @@ keywords_document_nb_file = '../exercise3/competition/data/task/test.txt'  # 'pa
 # for signature verification
 users_txt_file = 'input-files/users.txt'  # 'path/to/users.txt'
 # for molecule graphs
-gxl_folder = '../exercise5/MoleculesClassification/gxl'  # 'path/to/gxl-folder'
+gxl_folder = '../exercise5/MoleculesClassification/test'  # 'path/to/gxl-folder'
 
 #%% DO NOT CHANGE ANYTHING FROM HERE ON!
 results_filenames = ['svm.txt', 'mlp.txt', 'cnn.txt', 'kws.csv', 'sign-ver.csv', 'mol.csv']
