@@ -46,8 +46,8 @@ results_folder = '.'  # 'path/to/result-folder'
 # for mnist
 test_mnist_length = 10000
 # for kws
-keywords_txt_file = '../exercise3/data/task/keywords.txt'  # 'path/to/keyword.txt'
-keywords_document_nb_file = '../exercise3/data/task/test.txt'  # 'path/to/text-file-with-page-id/valid.txt
+keywords_txt_file = '../exercise3/competition/data/task/keywords.txt'  # 'path/to/keyword.txt'
+keywords_document_nb_file = '../exercise3/competition/data/task/test.txt'  # 'path/to/text-file-with-page-id/valid.txt
 # for signature verification
 users_txt_file = 'input-files/users.txt'  # 'path/to/users.txt'
 # for molecule graphs

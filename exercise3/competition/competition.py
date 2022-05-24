@@ -28,7 +28,7 @@ output_path_distance = Path.cwd() / "output" / "distance"
 output_path_distance.mkdir(parents=True, exist_ok=True)
 valid_path = Path.cwd().parents[0] / "competition" / "output" / "preprocessing" / "valid"
 valid_savepath = Path.cwd().parents[0] / "competition" / "output" / "distance" / "valid"
-out_path = Path.cwd().parents[0] / "competition" / "output" / "distance" / "distances.csv"
+out_path = Path.cwd().parents[0] / "competition" / "output" / "distance" / "kws.csv"
 transcription_path = root_path / "task" / "keywords.txt"
 train_savepath = Path("../distance/output/train")
 test_savepath = Path("../distance/output/valid")
@@ -198,20 +198,14 @@ def get_transcriptions():
 
 transcriptions = get_transcriptions()
 
-train_ids, train_features = load_precomputed_features(train_savepath)
+#train_ids, train_features = load_precomputed_features(train_savepath)
 test_ids, test_features = load_precomputed_features(test_savepath)
-train_ids = train_ids + test_ids
-train_features = train_features + test_features
+#train_ids = train_ids + test_ids
+#train_features = train_features + test_features
 filtered_train_ids = []
 filtered_train_features = []
 
-# for i in range(len(train_ids)-1):
-    # if train_ids[i] in transcriptions.keys():
-        # filtered_train_ids.append(train_ids[i])
-        # filtered_train_features.append(train_features[i])
-
-
-for id_, features in zip(train_ids,train_features):
+for id_, features in zip(test_ids, test_features):
     if id_ in list(transcriptions.keys()):
         filtered_train_ids.append(id_)
         filtered_train_features.append(features)
