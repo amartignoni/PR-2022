@@ -12,7 +12,8 @@ sys.path.append("../features")
 sys.path.append("..")
 from features import get_features
 from sympy.combinatorics import Permutation
-from fastdtw import fastdtw
+#from fastdtw import fastdtw
+from tslearn.metrics import dtw
 from string_utils import correct_string
 
 
@@ -69,7 +70,7 @@ def load_files_and_compute_features(load_path, save_path):
         images.append(feature_array)
 
         np.savetxt(
-            Path(save_path / f"{img_id}.csv"), feature_array, delimiter=",", fmt="%1f"
+            Path(save_path / f"{img_id}.csv").as_posix(), feature_array, delimiter=",", fmt="%1f"
         )
 
     # sort ids and features lists the same way
@@ -121,8 +122,8 @@ def load_precomputed_features(load_path):
 
 def generalizedDTW(test, training):
 
-    distance, _ = fastdtw(test, training, dist=euclidean)
-
+    #distance, _ = fastdtw(test, training, dist=euclidean)
+    distance = dtw(test.T, training.T, global_constraint="sakoe_chiba")
     return distance
 
 
