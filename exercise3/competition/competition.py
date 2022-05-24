@@ -12,7 +12,7 @@ sys.path.append("../features")
 sys.path.append("..")
 from features import get_features
 from sympy.combinatorics import Permutation
-#from fastdtw import fastdtw
+#from fastdtw import fastdtw#
 from tslearn.metrics import dtw
 from string_utils import correct_string
 
@@ -200,15 +200,15 @@ transcriptions = get_transcriptions()
 
 train_ids, train_features = load_precomputed_features(train_savepath)
 test_ids, test_features = load_precomputed_features(test_savepath)
-train_ids.append(test_ids)
-train_features.append(test_features)
+train_ids.extend(test_ids)
+train_features.extend(test_features)
 filtered_train_ids = []
 filtered_train_features = []
 
-for i in range(len(train_ids)-1):
-    if train_ids[i] in transcriptions.keys():
-        filtered_train_ids.append(train_ids[i])
-        filtered_train_features.append(train_features[i])
+for id_, features in zip(train_ids, train_features):
+    if id_ in transcriptions.keys():
+        filtered_train_ids.append(id_)
+        filtered_train_features.append(features)
 
 valid_ids, valid_features = load_files_and_compute_features(
         valid_path, valid_savepath
