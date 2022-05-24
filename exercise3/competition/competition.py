@@ -12,7 +12,7 @@ sys.path.append("../features")
 sys.path.append("..")
 from features import get_features
 from sympy.combinatorics import Permutation
-#from fastdtw import fastdtw#
+#from fastdtw import fastdtw
 from tslearn.metrics import dtw
 from string_utils import correct_string
 
@@ -200,22 +200,30 @@ transcriptions = get_transcriptions()
 
 train_ids, train_features = load_precomputed_features(train_savepath)
 test_ids, test_features = load_precomputed_features(test_savepath)
-train_ids.extend(test_ids)
-train_features.extend(test_features)
+train_ids = train_ids + test_ids
+train_features = train_features + test_features
 filtered_train_ids = []
 filtered_train_features = []
 
-for id_, features in zip(train_ids, train_features):
-    if id_ in transcriptions.keys():
+# for i in range(len(train_ids)-1):
+    # if train_ids[i] in transcriptions.keys():
+        # filtered_train_ids.append(train_ids[i])
+        # filtered_train_features.append(train_features[i])
+
+
+for id_, features in zip(train_ids,train_features):
+    if id_ in list(transcriptions.keys()):
         filtered_train_ids.append(id_)
         filtered_train_features.append(features)
+
+#print(filtered_train_ids)
 
 valid_ids, valid_features = load_files_and_compute_features(
         valid_path, valid_savepath
     )
 
 dist_mat = np.array(
-        [[generalizedDTW(i, j) for j in filtered_train_features] for i in valid_features]
+        [[generalizedDTW(i, j) for j in valid_features] for i in filtered_train_features]
     )
 
 np.savetxt("./output/mat.csv", dist_mat, delimiter=",", fmt="%1f")
@@ -225,11 +233,11 @@ np.savetxt("./output/mat.csv", dist_mat, delimiter=",", fmt="%1f")
 
 out = []
 
-for i in range(len(valid_features)):
+for i in range(len(filtered_train_features)):
 
-    keyword = transcriptions[valid_ids[i]]
+    keyword = transcriptions[filtered_train_ids[i]]
 
-    temp_dict = {k: v for (k, v) in zip(filtered_train_ids, dist_mat[i, :])}
+    temp_dict = {k: v for (k, v) in zip(valid_ids, dist_mat[i, :])}
 
     tuple_list = sorted(temp_dict.items(), key=lambda x: x[1])
 

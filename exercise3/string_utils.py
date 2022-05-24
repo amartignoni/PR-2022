@@ -53,6 +53,6 @@ def correct_string(str):
         lambda substr: all([char in alphanumeric for char in substr]), str_corrected
     )
 
-    final_str = "".join(str_without_specials)
+    final_str = "–".join(str_without_specials)
 
     return final_str

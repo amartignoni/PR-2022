@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 from pathlib import Path
 from PIL import Image, ImageOps
 import numpy as np
+import sys
 
 
 ## creation of a dataloader using the MNIST dataset in png-format
@@ -58,14 +59,14 @@ class MLP(nn.Module):  ## adapted from an example in the pytorch documentation
     def __init__(self, hidden_neurons):
 
         super(MLP, self).__init__()
-        self.flatten = nn.Flatten()
+        self.flatten = nn.Flatten(start_dim=0)
         self.layers = nn.Sequential(  ## three layers, hidden layer adaptable
             nn.Linear(784, hidden_neurons),  # input layer
             nn.ReLU(),  # activation function
-            nn.Dropout(), # dropout to prevent reliance on a single neuron "path"
+            #nn.Dropout(), # dropout to prevent reliance on a single neuron "path"
             nn.Linear(hidden_neurons, hidden_neurons),  # hidden layer of adaptable size
             nn.ReLU(),
-            nn.Dropout(),
+            #nn.Dropout(),
             nn.Linear(hidden_neurons, 10),  # output layer
         )
 
@@ -86,6 +87,9 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 ## initiate model
 model = MLP(neurons_middle_layer).to(device)
+
+if sys.argv[1] != "1":
+    model.load_state_dict(torch.load('trained_model.pth', map_location=device))
 
 ## define loss function
 loss_func = nn.CrossEntropyLoss()
@@ -150,29 +154,34 @@ def test_loop(dataloader, model, loss_fn):
     print(f"Test : \n Accuracy: {(100*correct):>0.1f}%, Averag loss: {te_loss:>8f} \n")
     return correct, te_loss
 
-challenge_images = load_challenge()
+if sys.argv[1] != "1":
 
-print(challenge_images)
+    challenge_images = load_challenge()
 
-for e in range(epochs):
-    print(f"Epoch {e+1}\n-------------------------------")
-    # execute network, store accuracies and errors
-    train_accuracy, train_err = train_loop(
-        load_train(batch_size), model, loss_func, optimizer
-    )
-    test_accuracy, test_err = test_loop(load_test(), model, loss_func)
-    train_acc.append(train_accuracy)
-    train_loss.append(train_err)
-    test_acc.append(test_accuracy)
-    test_loss.append(test_err)
-print("Done!")
 
-with open("mlp.txt", "w") as txtwriter:
+if sys.argv[1] == "1":
 
-    for (k, v) in challenge_images:
+    for e in range(epochs):
+        print(f"Epoch {e+1}\n-------------------------------")
+        # execute network, store accuracies and errors
+        train_accuracy, train_err = train_loop(
+            load_train(batch_size), model, loss_func, optimizer
+        )
+        test_accuracy, test_err = test_loop(load_test(), model, loss_func)
+        train_acc.append(train_accuracy)
+        train_loss.append(train_err)
+        test_acc.append(test_accuracy)
+        test_loss.append(test_err)
+    print("Done!")
 
-        txtwriter.write(model(v))
-        txtwriter.write("\n")
+else:
+
+    with open("mlp.txt", "w") as txtwriter:
+    
+        for (k, v) in challenge_images.items():
+    
+            txtwriter.write(str(torch.argmax(model(v.float())).item()))
+            txtwriter.write("\n")
 
 
 plot_results = True
