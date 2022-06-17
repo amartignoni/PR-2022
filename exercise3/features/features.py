@@ -16,11 +16,18 @@ def get_features(image):
     return normalize(np.array(image_features))
 
 
+# def normalize(feature_vectors):
+#     transposed = feature_vectors.T
+#     for idx, column in enumerate(transposed):
+#         transposed[idx] = stats.zscore(column)
+#     return transposed
+
 def normalize(feature_vectors):
     transposed = feature_vectors.T
-    for idx, column in enumerate(transposed):
-        transposed[idx] = stats.zscore(column)
-    return transposed
+
+    transposed_normed = (transposed - transposed.min(0)) / transposed.ptp(0)
+
+    return transposed_normed
 
 
 def calculate_feature_vector(window, next_window):
@@ -69,9 +76,9 @@ def fraction_of_black_pixels_between_uc_and_lc(window):
     ) / len(window[upper_contour(window): lower_contour(window)+1])
 
 
-def gradient_lc(window, next_window):
-    return lower_contour(window) - lower_contour(next_window)
+def gradient_lc(curr_window, next_window):
+    return lower_contour(next_window) - lower_contour(curr_window)
 
 
-def gradient_uc(window, next_window):
-    return upper_contour(window) - upper_contour(next_window)
+def gradient_uc(curr_window, next_window):
+    return upper_contour(next_window) - upper_contour(curr_window)
