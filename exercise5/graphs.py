@@ -5,6 +5,7 @@ from tqdm import tqdm
 import csv
 import gmatch4py as gm
 import numpy as np
+import sys
 
 
 def predict(train_set, train_labels, graph, k):
@@ -97,11 +98,18 @@ with open(root_path / "train.txt", "r") as train_file:
         train_set[id] = molecules[id]
         train_labels[id] = label
 
-with open(root_path / "valid.txt", "r") as validation_file:
-    for line in validation_file:
-        id, label = line.split()
-        validation_set[id] = molecules[id]
-        validation_labels[id] = label
+if sys.argv[1] == 'test':
+    with open(root_path / "valid.txt", "r") as validation_file:
+        for line in validation_file:
+            id, label = line.split()
+            train_set[id] = molecules[id]
+            train_labels[id] = label
+else:
+    with open(root_path / "valid.txt", "r") as validation_file:
+        for line in validation_file:
+            id, label = line.split()
+            validation_set[id] = molecules[id]
+            validation_labels[id] = label
 
 
 # PART 2: Classify each element of the validation set and compute accuracy
@@ -110,22 +118,26 @@ k = 10
 correct_predictions = 0
 n_predictions = len(validation_set)
 
-# Run on the validation set
-# with open("mol_val.csv", 'w') as csvfile:
-#     writer = csv.writer(csvfile, delimiter=",")
-#     for validation_id, validation_graph in tqdm(validation_set.items()):
-#         prediction = predict(train_set, train_labels, validation_graph, k)
-#         ground_truth_label = validation_labels[validation_id]
-#         print(prediction, validation_id, ground_truth_label)
-#         writer.writerow([validation_id, prediction])
-#         if prediction == ground_truth_label:
-#             correct_predictions += 1
+if sys.argv[1] != 'test':
 
-# print(f"\n{k}-NN ended, accuracy: {correct_predictions / n_predictions}\n")
+    # Run on the validation set
+    with open("mol_val.csv", 'w') as csvfile:
+        writer = csv.writer(csvfile, delimiter=",")
+        for validation_id, validation_graph in tqdm(validation_set.items()):
+            prediction = predict(train_set, train_labels, validation_graph, k)
+            ground_truth_label = validation_labels[validation_id]
+            # print(prediction, validation_id, ground_truth_label)
+            writer.writerow([validation_id, prediction])
+            if prediction == ground_truth_label:
+                correct_predictions += 1
 
-# Run on the test set (competition)
-with open("mol.csv", 'w') as csvfile:
-    writer = csv.writer(csvfile, delimiter=",")
-    for test_id, test_graph in tqdm(test_set.items()):
-        prediction = predict(train_set, train_labels, test_graph, k)
-        writer.writerow([test_id, prediction])
+    print(f"\n{k}-NN ended, accuracy: {correct_predictions / n_predictions}\n")
+
+else:
+
+    # Run on the test set (competition)
+    with open("mol.csv", 'w') as csvfile:
+        writer = csv.writer(csvfile, delimiter=",")
+        for test_id, test_graph in tqdm(test_set.items()):
+            prediction = predict(train_set, train_labels, test_graph, k)
+            writer.writerow([test_id, prediction])
