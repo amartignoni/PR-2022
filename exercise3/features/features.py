@@ -22,13 +22,19 @@ def get_features(image):
 #         transposed[idx] = stats.zscore(column)
 #     return transposed
 
+# def normalize(feature_vectors):
+#     transposed = feature_vectors.T
+
+#     transposed_normed = (transposed - transposed.min(0)) / transposed.ptp(0)
+
+#     return transposed_normed
+
 def normalize(feature_vectors):
-    transposed = feature_vectors.T
 
-    transposed_normed = (transposed - transposed.min(0)) / transposed.ptp(0)
+    normalized = (feature_vectors - feature_vectors.min(0)) / feature_vectors.ptp(0)
+    # print(normalized, normalized.shape)
 
-    return transposed_normed
-
+    return normalized.T
 
 def calculate_feature_vector(window, next_window):
     return [
